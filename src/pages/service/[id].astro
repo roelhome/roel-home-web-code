@@ -1,120 +1,79 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import CtaBand from '../../components/CtaBand.astro';
-import { getServices } from '../../lib/supabase';
+import { services, imgSrc, waUrl } from '../../data/originalData.js';
 
 export async function getStaticPaths() {
-  const services = await getServices();
   return services.map((service) => ({
     params: { id: service.id },
     props: { service, allServices: services },
   }));
 }
 
-const { service, allServices } = Astro.props;
+const { service } = Astro.props;
 
-const otherServices = allServices.filter((s) => s.id !== service.id);
-
-const waText = encodeURIComponent(`Hello ROEL, I am interested in your ${service.name} service. Please contact me to discuss my project.`);
-const waUrl = `https://wa.me/918111899991?text=${waText}`;
+const whatsappLink = waUrl(`Hello ROEL, I am interested in your ${service.name} service. Please contact me to discuss my requirement.`);
+const stepTitles = ['Understand', 'Explore', 'Refine', 'Plan'];
 ---
 
 <Layout 
-  title={`${service.name} | ROEL Services Kochi`}
+  title={`${service.name} | ROEL Home Solutions`}
   description={service.summary || service.description}
-  image={service.image}
+  image={imgSrc(service.image)}
 >
-  <!-- Breadcrumbs -->
-  <section style="padding:32px 0 16px;">
-    <div class="container">
-      <nav style="display:flex;gap:12px;font-size:11px;text-transform:uppercase;letter-spacing:0.2em;color:var(--muted);" aria-label="Breadcrumb">
-        <a href="/" style="color:var(--ink);">Home</a>
-        <span>/</span>
-        <a href="/services" style="color:var(--ink);">Services</a>
-        <span>/</span>
-        <span style="color:var(--walnut);">{service.name}</span>
-      </nav>
-    </div>
-  </section>
+  <div class="container">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a> / <a href="/services">Services</a> / <span>{service.name}</span>
+    </nav>
+  </div>
 
-  <!-- Service Detail Hero -->
-  <section class="section" style="padding-top:20px;padding-bottom:60px;">
-    <div class="container" style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:64px;align-items:center;">
-      <div class="gsap-fade-up">
-        <span class="eyebrow" style="color:var(--walnut);">Service / {service.number} &nbsp;·&nbsp; {service.tag}</span>
-        <h1 style="font:400 clamp(44px, 5.5vw, 80px)/0.95 'RoelSerif', serif;margin:16px 0 24px;">
-          {service.name}
-        </h1>
-        <p style="font-size:18px;color:var(--muted);line-height:1.7;margin-bottom:32px;">
-          {service.description}
-        </p>
-
-        <div style="display:flex;gap:16px;flex-wrap:wrap;">
-          <a class="btn gold" href={waUrl} target="_blank" rel="noopener noreferrer">
-            Discuss on WhatsApp <span class="arrow">↗</span>
-          </a>
-          <button class="btn" type="button" data-enquiry={`Service: ${service.name}`}>
-            Book Consultation <span class="arrow">↗</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="gsap-fade-up" style="aspect-ratio:4/3;overflow:hidden;background:rgba(118,89,65,0.1);border:1px solid var(--line);">
-        <img src={service.image} alt={service.name} style="width:100%;height:100%;object-fit:cover;" />
+  <section class="service-detail-hero">
+    <div class="copy">
+      <span class="eyebrow" style="color:var(--champagne)">Service / {service.number}</span>
+      <h1>{service.name}</h1>
+      <p>{service.description}</p>
+      <div style="margin-top:30px">
+        <a class="btn gold" href={whatsappLink} target="_blank" rel="noopener noreferrer">
+          Discuss on WhatsApp <span class="arrow">↗</span>
+        </a>
       </div>
     </div>
+    <img src={imgSrc(service.image)} alt={`${service.name} architectural service`} />
   </section>
 
-  <!-- Workflow and Deliverables -->
-  <section class="section" style="border-top:1px solid var(--line);background:rgba(229,191,140,0.1);">
-    <div class="container" style="max-width:960px;">
-      <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">Step-by-step coordination</span>
-      <h2 style="font:400 clamp(32px, 4vw, 52px) 'RoelSerif', serif;margin-bottom:36px;">
-        How this service unfolds for <em class="italic">your space.</em>
-      </h2>
-
-      <div style="display:flex;flex-direction:column;gap:20px;">
-        {service.items.map((item, idx) => (
-          <div style="display:flex;gap:24px;align-items:flex-start;padding:24px;background:#ffffff;border:1px solid var(--line);border-radius:2px;">
-            <span style="font:400 24px 'RoelSerif', serif;color:var(--gold);min-width:32px;">
-              0{idx + 1}
-            </span>
-            <div>
-              <h3 style="font:400 20px 'RoelSerif', serif;margin-bottom:6px;">{item}</h3>
-              <p class="muted" style="font-size:14px;margin:0;">
-                Detailed coordination with architects, project managers, and clients to ensure smooth execution on site.
-              </p>
-            </div>
+  <section class="container service-detail-features">
+    <div>
+      <span class="eyebrow">A considered process</span>
+      <h2>How we can <em class="italic">help.</em></h2>
+      <p style="line-height:1.9;color:var(--muted);font-size:13px;max-width:370px">
+        Every space has its own practical needs, personality and ambitions. These are illustrative steps for a tailored conversation with our team.
+      </p>
+      <button class="btn outline" type="button" data-enquiry={`${service.name} service enquiry`}>
+        Request a discussion <span class="arrow">↗</span>
+      </button>
+    </div>
+    <div>
+      {service.items.map((x, i) => (
+        <div class="step">
+          <strong>0{i + 1}</strong>
+          <div>
+            <h3>{stepTitles[i] || `Step 0${i + 1}`}</h3>
+            <p>{x}</p>
           </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- Other Services -->
-  <section class="section" style="border-top:1px solid var(--line);">
-    <div class="container">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow" style="color:var(--walnut);">Complementary Services</span>
-          <h2>Explore our <em>other practice areas.</em></h2>
         </div>
-        <a class="btn" href="/services">All Services <span class="arrow">↗</span></a>
-      </div>
-
-      <div>
-        {otherServices.map((s) => (
-          <a class="service-row" href={`/service/${s.id}`}>
-            <span class="service-index">{s.number}</span>
-            <h3>{s.name}</h3>
-            <p>{s.summary}</p>
-            <span class="round-arrow">↗</span>
-          </a>
-        ))}
-      </div>
+      ))}
     </div>
   </section>
 
-  <!-- CTA Band -->
-  <CtaBand />
+  <section class="cta-band">
+    <div class="container cta-row">
+      <div>
+        <span class="eyebrow">The next chapter starts here</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>Tell us what you are creating. We will help you explore the material direction for your home or project.</p>
+        <button class="btn" type="button" data-enquiry={`Consultation for ${service.name}`}>Start a conversation <span class="arrow">↗</span></button>
+      </div>
+    </div>
+  </section>
 </Layout>

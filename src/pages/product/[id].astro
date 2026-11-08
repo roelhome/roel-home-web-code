@@ -1,10 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import CtaBand from '../../components/CtaBand.astro';
-import { getProducts } from '../../lib/supabase';
+import { products, imgSrc, waUrl } from '../../data/originalData.js';
 
 export async function getStaticPaths() {
-  const products = await getProducts();
   return products.map((product) => ({
     params: { id: product.id },
     props: { product, allProducts: products },
@@ -12,18 +10,16 @@ export async function getStaticPaths() {
 }
 
 const { product, allProducts } = Astro.props;
+const otherProducts = allProducts.filter((p) => p.id !== product.id);
 
-const relatedProducts = allProducts.filter((p) => p.id !== product.id).slice(0, 2);
-
-const waText = encodeURIComponent(`Hello ROEL, I am interested in ${product.name} (${product.sku}). Please share availability, finish options, and a quotation.`);
-const waUrl = `https://wa.me/918111899991?text=${waText}`;
+const whatsappLink = waUrl(`Hello ROEL Home Solutions, I would like to enquire about ${product.name} (${product.sku}). Please share details and a quotation.`);
 
 // Product schema for rich search results
 const productSchema = {
   "@context": "https://schema.org/",
   "@type": "Product",
   "name": product.name,
-  "image": new URL(product.image, "https://roelhomes.com").toString(),
+  "image": new URL(imgSrc(product.image), "https://roelhomes.com").toString(),
   "description": product.description,
   "sku": product.sku,
   "brand": {
@@ -40,111 +36,99 @@ const productSchema = {
 ---
 
 <Layout 
-  title={`${product.name} | ROEL Home Solutions Kochi`}
+  title={`${product.name} | ROEL Home Solutions`}
   description={product.short || product.description}
-  image={product.image}
+  image={imgSrc(product.image)}
 >
   <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
 
-  <!-- Breadcrumb -->
-  <section style="padding:32px 0 16px;">
+  <section class="container">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a> / <a href="/catalogue">Products</a> / <span>{product.name}</span>
+    </nav>
+
+    <div class="detail-grid">
+      <div class="detail-image">
+        <img src={imgSrc(product.image)} alt={`${product.name} sample product image`} />
+        <span class="label">{product.category}</span>
+      </div>
+      <div class="detail-body">
+        <div class="eyebrow">{product.sku} / MATERIAL STUDY</div>
+        <h1>{product.name}</h1>
+        <p>{product.description}</p>
+        <div class="detail-price">
+          <small>Illustrative starting price</small>
+          {product.price}
+        </div>
+        <div class="micro muted">Sample estimate · final quote depends on finish, dimensions and specification.</div>
+        <div class="detail-actions">
+          <a class="btn" href={whatsappLink} target="_blank" rel="noopener noreferrer">
+            Enquire on WhatsApp <span class="arrow">↗</span>
+          </a>
+          <button class="btn outline" type="button" data-enquiry={`${product.name} — ${product.sku}`}>
+            Request details <span class="arrow">↗</span>
+          </button>
+        </div>
+        <div class="detail-specs">
+          <h3>At a glance</h3>
+          {product.specs.map((s, i) => (
+            <div class="spec-line">
+              <span>0{i + 1}</span>
+              <span>{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="statement-panel">
+      <h2>Thoughtful by<br /><em class="italic">design.</em></h2>
+      <div>
+        <span class="micro">Suggested applications</span>
+        <p style="margin-top:16px">{product.applications}</p>
+        <p style="margin-top:12px;font-size:11px">Technical details shown are sample content for website design and not a final product data sheet.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
     <div class="container">
-      <nav style="display:flex;gap:12px;font-size:11px;text-transform:uppercase;letter-spacing:0.2em;color:var(--muted);" aria-label="Breadcrumb">
-        <a href="/" style="color:var(--ink);">Home</a>
-        <span>/</span>
-        <a href="/catalogue" style="color:var(--ink);">Products</a>
-        <span>/</span>
-        <span style="color:var(--walnut);">{product.name}</span>
-      </nav>
-    </div>
-  </section>
-
-  <!-- Product Detail Grid -->
-  <section class="container detail-grid">
-    <div class="detail-image gsap-fade-up">
-      <img src={product.image} alt={`${product.name} sample architectural material`} />
-      <span class="label">{product.category}</span>
-    </div>
-
-    <div class="detail-body gsap-fade-up">
-      <div class="eyebrow" style="color:var(--walnut);">{product.sku} / MATERIAL STUDY</div>
-      <h1>{product.name}</h1>
-      <p style="font-size:16px;line-height:1.7;color:var(--muted);margin-bottom:24px;">
-        {product.description}
-      </p>
-
-      <div style="font-size:22px;font-family:'RoelSerif',serif;color:var(--walnut);padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
-        Estimated Reference: <strong>{product.price}</strong>
-      </div>
-
-      <div style="margin:28px 0;">
-        <span class="micro" style="color:var(--walnut);display:block;margin-bottom:12px;">Material Specifications</span>
-        <ul class="specs-list">
-          {product.specs.map((spec) => (
-            <li>{spec}</li>
-          ))}
-        </ul>
-      </div>
-
-      <div style="margin-bottom:32px;">
-        <span class="micro" style="color:var(--walnut);display:block;margin-bottom:8px;">Recommended Applications</span>
-        <p style="font-size:14px;color:var(--ink);line-height:1.6;">
-          {product.applications}
-        </p>
-      </div>
-
-      <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <a class="btn gold" href={waUrl} target="_blank" rel="noopener noreferrer">
-          Enquire on WhatsApp <span class="arrow">↗</span>
-        </a>
-        <button class="btn" type="button" data-enquiry={`${product.name} (${product.sku})`}>
-          Send Email Enquiry <span class="arrow">↗</span>
-        </button>
-      </div>
-
-      <div style="margin-top:24px;">
-        <a href="/catalogue" style="font-size:11px;text-transform:uppercase;letter-spacing:0.2em;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
-          ← Back to full catalogue
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Related Materials -->
-  {relatedProducts.length > 0 && (
-    <section class="section" style="border-top:1px solid var(--line);background:rgba(229,191,140,0.08);">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <span class="eyebrow" style="color:var(--walnut);">Complementary Profiles</span>
-            <h2>Explore related <em>finishes.</em></h2>
-          </div>
-          <a class="btn" href="/catalogue">All Products <span class="arrow">↗</span></a>
-        </div>
-
-        <div class="products-grid">
-          {relatedProducts.map((p) => (
-            <article class="product-card">
-              <a class="product-image" href={`/product/${p.id}`}>
-                <img src={p.image} alt={p.name} loading="lazy" />
-                <span class="on-image-tag">{p.category}</span>
-                <span class="image-arrow">↗</span>
-              </a>
-              <div class="product-info">
-                <div>
-                  <div class="micro muted">{p.sku}</div>
-                  <h3><a href={`/product/${p.id}`}>{p.name}</a></h3>
-                  <p>{p.short}</p>
-                </div>
-                <div class="product-price">{p.price}</div>
+      <h2 class="related-heading">Explore another <em class="italic">material.</em></h2>
+      <div class="product-grid">
+        {otherProducts.map((p) => (
+          <article class="product-card">
+            <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
+              <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
+              <span class="on-image-tag">{p.category}</span>
+              <span class="image-arrow">↗</span>
+            </a>
+            <div class="product-info">
+              <div>
+                <div class="micro muted">{p.sku}</div>
+                <h3><a href={`/product/${p.id}`}>{p.name}</a></h3>
+                <p>{p.short}</p>
               </div>
-            </article>
-          ))}
-        </div>
+              <div class="product-price">
+                <small>Sample price from</small>
+                {p.price}
+              </div>
+            </div>
+          </article>
+        ))}
       </div>
-    </section>
-  )}
+    </div>
+  </section>
 
-  <!-- CTA Band -->
-  <CtaBand />
+  <section class="cta-band">
+    <div class="container cta-row">
+      <div>
+        <span class="eyebrow">The next chapter starts here</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>Tell us what you are creating. We will help you explore the material direction for your home or project.</p>
+        <button class="btn" type="button" data-enquiry={`Consultation for ${product.name}`}>Start a conversation <span class="arrow">↗</span></button>
+      </div>
+    </div>
+  </section>
 </Layout>

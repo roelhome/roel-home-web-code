@@ -1,126 +1,129 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import HeroCanvas from '../components/HeroCanvas.astro';
-import CtaBand from '../components/CtaBand.astro';
-import { getProducts, getServices, getProjects } from '../lib/supabase';
-
-const products = await getProducts();
-const services = await getServices();
-const projects = await getProjects();
+import { products, services, projects, imgSrc } from '../data/originalData.js';
 ---
 
 <Layout 
   title="ROEL Home Solutions | Spaces Elevated | Architectural Materials Kochi"
   description="ROEL Home Solutions — architectural materials, distinctive doors, wall solutions and decorative accents in Kochi, Kerala. Creating spaces, defining living."
 >
-  <!-- Hero Section -->
+  <!-- Hero Section (Exact 1:1 match to uploaded HTML) -->
   <section class="hero">
-    <HeroCanvas />
-
     <div class="hero-grid">
       <div class="hero-copy gsap-fade-up">
-        <div class="eyebrow" style="color:var(--walnut);">ROEL Home Solutions &nbsp; / &nbsp; Kochi</div>
+        <div class="eyebrow">ROEL Home Solutions &nbsp; / &nbsp; Kochi</div>
         <h1>Spaces<br />worth <em>living in.</em></h1>
-        <p class="hero-desc">
-          Architectural materials, distinctive doors and considered details for places that feel entirely your own.
-        </p>
+        <p class="hero-desc">Architectural materials, distinctive doors and considered details for places that feel entirely your own.</p>
         <div>
-          <a class="btn gold" href="/catalogue">
-            Explore products <span class="arrow">↗</span>
-          </a>
+          <a class="btn gold" href="/catalogue">Explore products <span class="arrow">↗</span></a>
         </div>
         <div class="hero-meta">
           <span>Creating spaces. Defining living.</span>
-          <span>•</span>
-          <span>Kochi, Kerala</span>
+          <span>01 / 03</span>
         </div>
       </div>
-
-      <div class="hero-media-wrap gsap-fade-up">
+      <div class="hero-visual">
         <img 
           src="/images/hero.webp" 
-          alt="ROEL Home Solutions modern architectural interior featuring natural wood fluted panels"
-          width="640"
+          alt="Warm contemporary interior with wood slat feature wall, potted plant and premium wooden door"
+          width="800"
           height="800"
           fetchpriority="high"
         />
-        <button type="button" class="film-badge" data-play-film="true" aria-label="Play ROEL brand preview film">
-          <span class="play-dot" aria-hidden="true"></span>
-          <span>Play brand preview</span>
-          <span class="arrow">↗</span>
-        </button>
+        <div class="hero-side-text">SURFACES / DOORS / DETAILS</div>
+        <div class="hero-visual-label">
+          <span>DESIGNED FOR THE WAY WE LIVE</span>
+          <span class="hero-number">R.</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Brand Philosophy Section -->
-  <section class="section" style="background:rgba(229,191,140,0.12);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
-    <div class="container gsap-fade-up" style="max-width:960px;text-align:center;padding:32px 0;">
-      <span class="eyebrow" style="color:var(--walnut);justify-content:center;margin-bottom:20px;">The ROEL Philosophy</span>
-      <h2 style="font:400 clamp(32px, 4vw, 54px)/1.15 'RoelSerif', serif;margin-bottom:24px;">
-        Every space carries a quiet emotion shaped by <em class="italic">surfaces, warmth and light.</em>
-      </h2>
-      <p style="font-size:17px;color:var(--muted);line-height:1.7;max-width:760px;margin:0 auto 32px;">
-        At ROEL, we curate materials designed to elevate residential and commercial environments across Kerala. Through thoughtful proportions, honest textures and disciplined craftsmanship, we help turn architectural drawings into living environments.
-      </p>
-      <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
-        <a href="/about" class="btn">Our Story <span class="arrow">↗</span></a>
-        <button type="button" class="btn gold" data-enquiry="Consultation from Homepage">Schedule Consultation <span class="arrow">↗</span></button>
-      </div>
+  <!-- Hero Bottom Features -->
+  <div class="hero-bottom">
+    <div class="container">
+      <div class="hero-feature"><b>01</b><span>Architectural<br />wall solutions</span></div>
+      <div class="hero-feature"><b>02</b><span>Distinctive<br />door products</span></div>
+      <div class="hero-feature"><b>03</b><span>Decorative<br />design accents</span></div>
     </div>
-  </section>
+  </div>
 
-  <!-- Featured Products / Catalogue Edit -->
+  <!-- Philosophy / Intro -->
   <section class="section">
+    <div class="container intro-block gsap-fade-up">
+      <div class="intro-overline">
+        <span class="eyebrow">The ROEL philosophy</span>
+        <strong>R.</strong>
+        <span class="micro">A considered approach<br />to better spaces</span>
+      </div>
+      <div>
+        <h2 class="intro-statement serif">We believe the difference is in <em>the details.</em></h2>
+        <p>Exceptional spaces begin with the right materials. At ROEL, we bring together contemporary aesthetics, quality-driven selections and thoughtful guidance to make each decision count.</p>
+        <a class="text-link" href="/about">Get to know ROEL <span class="arrow">↗</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Selected Products -->
+  <section class="section" style="padding-top:25px">
     <div class="container">
       <div class="section-head gsap-fade-up">
         <div>
-          <span class="eyebrow" style="color:var(--walnut);">The ROEL Edit</span>
-          <h2>Our <em>products.</em></h2>
+          <span class="eyebrow">01 / Selected products</span>
+          <h2>Made to make <em class="italic">an impression.</em></h2>
         </div>
-        <a class="btn" href="/catalogue">
-          View full catalogue <span class="arrow">↗</span>
-        </a>
+        <a class="text-link" href="/catalogue">All materials <span class="arrow">↗</span></a>
       </div>
-
-      <div class="products-grid gsap-stagger-parent">
+      <div class="product-grid gsap-stagger-parent">
         {products.map((p) => (
           <article class="product-card gsap-stagger-child">
             <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
-              <img src={p.image} alt={`${p.name} architectural material sample`} loading="lazy" />
+              <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
               <span class="on-image-tag">{p.category}</span>
               <span class="image-arrow">↗</span>
             </a>
             <div class="product-info">
               <div>
                 <div class="micro muted">{p.sku}</div>
-                <h3>
-                  <a href={`/product/${p.id}`}>{p.name}</a>
-                </h3>
+                <h3><a href={`/product/${p.id}`}>{p.name}</a></h3>
                 <p>{p.short}</p>
               </div>
-              <div class="product-price">{p.price}</div>
+              <div class="product-price">
+                <small>Sample price from</small>
+                {p.price}
+              </div>
             </div>
           </article>
         ))}
       </div>
+      <p class="sample-caption">Design-stage sample product names, specifications and prices. Official ROEL products and quotations will be confirmed before launch.</p>
     </div>
   </section>
 
-  <!-- Practice / Services Section -->
-  <section class="section" style="border-top:1px solid var(--line);">
+  <!-- Manifesto Section -->
+  <section class="manifesto">
+    <div class="manifesto-image">
+      <img src="/images/wave.webp" alt="Sculptural wood architectural ceiling detail" loading="lazy" />
+    </div>
+    <div class="manifesto-copy gsap-fade-up">
+      <span class="eyebrow">The ROEL perspective</span>
+      <h2>Materials<br />with <em class="italic">meaning.</em></h2>
+      <p>Texture. Proportion. Light. The most memorable interiors are built through deliberate material choices, not excess. We help connect the vision to the detail.</p>
+      <div><a class="text-link light" href="/services">See our approach <span class="arrow">↗</span></a></div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section class="section">
     <div class="container">
       <div class="section-head gsap-fade-up">
         <div>
-          <span class="eyebrow" style="color:var(--walnut);">Our Practice</span>
-          <h2>Care in <em>every detail.</em></h2>
+          <span class="eyebrow">02 / What we do</span>
+          <h2>More than <em class="italic">materials.</em></h2>
         </div>
-        <a class="btn" href="/services">
-          Explore services <span class="arrow">↗</span>
-        </a>
+        <p>Support at each stage, from exploring a material direction to planning the right finishes for the space.</p>
       </div>
-
-      <div class="gsap-stagger-parent">
+      <div class="service-list gsap-stagger-parent">
         {services.map((s) => (
           <a class="service-row gsap-stagger-child" href={`/service/${s.id}`}>
             <span class="service-index">{s.number}</span>
@@ -133,72 +136,71 @@ const projects = await getProjects();
     </div>
   </section>
 
-  <!-- Visual Journal / Projects Showcase -->
-  <section class="section" style="border-top:1px solid var(--line);">
+  <!-- Spaces in Focus / Projects -->
+  <section class="section projects-section">
     <div class="container">
       <div class="section-head gsap-fade-up">
         <div>
-          <span class="eyebrow" style="color:var(--walnut);">A Visual Journal</span>
-          <h2>Material in <em>context.</em></h2>
+          <span class="eyebrow">03 / Spaces in focus</span>
+          <h2>Ideas made <em class="italic">visible.</em></h2>
         </div>
-        <a class="btn" href="/projects">
-          Explore projects <span class="arrow">↗</span>
-        </a>
+        <a class="text-link" href="/projects">Explore the gallery <span class="arrow">↗</span></a>
       </div>
-
-      <div class="projects-grid gsap-stagger-parent">
-        {projects.map((pj) => (
-          <a class="project-card gsap-stagger-child" href={`/project/${pj.id}`}>
+      <div class="project-grid gsap-stagger-parent">
+        {projects.slice(0, 3).map((p) => (
+          <a class="project-card gsap-stagger-child" href={`/project/${p.id}`}>
             <div class="project-photo">
-              <img src={pj.image} alt={`${pj.name} architectural showcase`} loading="lazy" />
-              <span class="project-pill">{pj.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
+              <img src={imgSrc(p.image)} alt={`${p.name} architectural showcase`} loading="lazy" />
+              <span class="project-pill">{p.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
               <div class="project-overlay">
-                <span>{pj.category}</span>
-                <h3>{pj.name}</h3>
+                <span>{p.category}</span>
+                <h3>{p.name}</h3>
               </div>
             </div>
             <div class="project-location">
-              <span>{pj.location} &nbsp;/&nbsp; {pj.year}</span>
+              <span>{p.location} &nbsp;/&nbsp; {p.year}</span>
               <span>↗</span>
             </div>
           </a>
         ))}
       </div>
+      <p class="sample-caption">Portfolio imagery and project stories above are design examples. Replace with actual ROEL projects prior to public launch.</p>
     </div>
   </section>
 
-  <!-- Material Consultation Highlight in Kochi -->
-  <section class="section" style="background:var(--ink);color:var(--ivory);">
-    <div class="container" style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
-      <div class="gsap-fade-up">
-        <span class="eyebrow" style="color:var(--champagne);">Material Consultation / Kochi</span>
-        <h2 style="font:400 clamp(38px,4.5vw,64px)/1.05 'RoelSerif', serif;margin:16px 0 24px;">
-          Selecting materials<br /><em class="italic" style="color:var(--champagne);">with confidence.</em>
-        </h2>
-        <p style="color:rgba(240,226,206,.75);font-size:16px;line-height:1.7;margin-bottom:32px;">
-          Whether you are building a new residence in Kochi or finalizing architectural details for a luxury commercial space, our team assists architects, builders and homeowners in navigating profiles, textures, finishes, and custom sizes.
-        </p>
-        <div style="display:flex;gap:20px;flex-wrap:wrap;">
-          <button type="button" class="btn gold" data-enquiry="Consultation in Kochi">
-            Book Consultation <span class="arrow">↗</span>
-          </button>
-          <a href="tel:+918111899991" class="btn inverse">
-            Call +91 81118 99991 <span class="arrow">↗</span>
-          </a>
-        </div>
+  <!-- Brand Film Section -->
+  <section class="film-section">
+    <div class="container film-layout">
+      <div class="film-copy gsap-fade-up">
+        <span class="eyebrow" style="color:var(--champagne)">04 / Our design language</span>
+        <h2>A closer<br /><em class="italic">look.</em></h2>
+        <p>A short visual study of surfaces, light and detail. Explore the atmosphere behind the ROEL approach.</p>
+        <button type="button" class="text-link light" style="background:none;border-left:0;border-right:0;border-top:0;cursor:pointer" data-play-film="true">
+          Watch the visual study <span class="arrow">↗</span>
+        </button>
       </div>
-
-      <div class="gsap-fade-up" style="aspect-ratio:4/3;overflow:hidden;border:1px solid rgba(229,191,140,0.25);">
-        <img 
-          src="/images/living.webp" 
-          alt="ROEL Home Solutions consultation and materials studio" 
-          style="width:100%;height:100%;object-fit:cover;"
-          loading="lazy"
-        />
+      <div class="film-frame" tabindex="0" role="button" data-play-film="true" aria-label="Play ROEL visual concept film">
+        <img src="/images/hero.webp" alt="Architectural door and slatted wood interior visual" loading="lazy" />
+        <div class="film-play"><span class="film-play-circle">▶</span></div>
+        <div class="film-frame-bottom">
+          <span>ROEL / VISUAL STUDY</span>
+          <span>00:08 &nbsp; · &nbsp; CONCEPT PREVIEW</span>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- CTA Band -->
-  <CtaBand />
+  <section class="cta-band">
+    <div class="container cta-row gsap-fade-up">
+      <div>
+        <span class="eyebrow">The next chapter starts here</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>Tell us what you are creating. We will help you explore the material direction for your home or project.</p>
+        <button class="btn" type="button" data-enquiry="Consultation for a new space">Start a conversation <span class="arrow">↗</span></button>
+      </div>
+    </div>
+  </section>
 </Layout>

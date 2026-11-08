@@ -1,88 +1,69 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import ContactForm from '../components/ContactForm';
+import { waUrl } from '../data/originalData.js';
+
+const whatsappChatUrl = waUrl('Hello ROEL Home Solutions, I would like to know more about your products and services.');
 ---
 
 <Layout 
-  title="Contact Us & Kochi Studio | ROEL Home Solutions"
-  description="Connect with ROEL Home Solutions in Kochi, Kerala. Call +91 81118 99991 or submit your architectural drawings and material requirements online."
+  title="Connect With Us | ROEL Home Solutions"
+  description="Whether you are creating a home, working on a project or exploring a product, we would love to hear from you."
 >
-  <!-- Page Header -->
-  <section class="section" style="padding-bottom:48px;">
+  <section class="page-hero">
     <div class="container">
-      <div style="border-bottom:1px solid var(--line);padding-bottom:48px;">
-        <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">Connect with us</span>
-        <h1 style="font:400 clamp(48px, 6vw, 92px)/0.95 'RoelSerif', serif;margin-bottom:20px;">
-          Let's talk <em>materials.</em>
-        </h1>
-        <p style="font-size:18px;color:var(--muted);max-width:640px;line-height:1.6;">
-          Whether you are creating a private residence, working on a commercial build, or specifying architectural surfaces, we would love to collaborate.
-        </p>
-      </div>
+      <span class="eyebrow">Connect with us</span>
+      <h1>Let's talk <em>materials.</em></h1>
+      <p>Whether you are creating a home, working on a project or exploring a product, we would love to hear from you.</p>
     </div>
   </section>
 
-  <!-- Contact Grid -->
-  <section class="section" style="padding-top:0;">
-    <div class="container" style="display:grid;grid-template-columns:1fr 1.3fr;gap:80px;align-items:start;">
-      <!-- Direct Contact Details -->
-      <div class="gsap-fade-up">
-        <span class="eyebrow" style="color:var(--walnut);">ROEL / Kochi, Kerala</span>
-        <h2 style="font:400 clamp(36px, 4vw, 56px)/1.05 'RoelSerif', serif;margin:16px 0 24px;">
-          Start with a<br /><em class="italic">conversation.</em>
-        </h2>
-        <p style="font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:36px;">
-          Share your ideas, dimensions or reference imagery. Our Kochi team can help you take the next step toward the right material directions.
-        </p>
-
-        <div style="display:flex;flex-direction:column;gap:24px;border-top:1px solid var(--line);padding-top:32px;">
-          <div>
-            <span class="micro" style="color:var(--walnut);">Direct Phone Line</span>
-            <div style="font:400 24px 'RoelSerif', serif;margin-top:4px;">
-              <a href="tel:+918111899991" style="color:var(--ink);">+91 81118 99991</a>
-            </div>
-          </div>
-
-          <div>
-            <span class="micro" style="color:var(--walnut);">Email Desk</span>
-            <div style="font:400 20px 'RoelSerif', serif;margin-top:4px;">
-              <a href="mailto:info@roelhome.com" style="color:var(--ink);">info@roelhome.com</a>
-            </div>
-          </div>
-
-          <div>
-            <span class="micro" style="color:var(--walnut);">Studio Location</span>
-            <p style="font-size:15px;color:var(--ink);margin-top:4px;">
-              Kochi, Kerala, India
-            </p>
-          </div>
-
-          <div>
-            <span class="micro" style="color:var(--walnut);">Studio Operating Hours</span>
-            <p style="font-size:14px;color:var(--muted);margin-top:4px;">
-              Monday through Saturday: 9:30 AM to 6:30 PM IST
-            </p>
-          </div>
-        </div>
-
-        <div style="margin-top:36px;">
-          <a 
-            class="btn gold" 
-            href="https://wa.me/918111899991?text=Hello%20ROEL,%20I%20would%20like%20to%20discuss%20an%20architectural%20material%20enquiry." 
-            target="_blank" 
-            rel="noopener noreferrer"
-          >
-            Chat Directly on WhatsApp <span class="arrow">↗</span>
-          </a>
-        </div>
+  <section class="container contact-grid">
+    <div class="contact-info">
+      <span class="eyebrow">ROEL / Kochi, Kerala</span>
+      <h2>Start with a <em class="italic">conversation.</em></h2>
+      <p>Share your ideas, dimensions or references. Our team can help you take the next step towards the right architectural solution.</p>
+      
+      <div class="contact-block">
+        <span class="micro">Call us</span>
+        <a href="tel:+918111899991">+91 81118 99991</a>
+        <a href="tel:+918111899188">+91 81118 99188</a>
       </div>
 
-      <!-- Interactive Contact Form -->
-      <div class="gsap-fade-up" style="background:#ffffff;padding:48px 40px;border:1px solid var(--line);border-radius:2px;box-shadow:0 8px 30px rgba(118,89,65,0.06);">
-        <span class="eyebrow" style="color:var(--walnut);margin-bottom:8px;">Project Consultation Form</span>
-        <h3 style="font:400 32px 'RoelSerif', serif;margin-bottom:24px;">Send a Message</h3>
-        <ContactForm client:load />
+      <div class="contact-block">
+        <span class="micro">Visit us</span>
+        <span class="address">
+          NH-66, Valluvally-Kochal,<br />
+          Koonammavu, Kochi,<br />
+          Kerala 683518
+        </span>
+        <a 
+          style="font:700 11px RoelSans, sans-serif;margin-top:18px;display:inline-block;text-decoration:underline" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          href="https://www.google.com/maps/search/?api=1&query=NH-66%2C+Valluvally-Kochal%2C+Koonammavu%2C+Kochi%2C+Kerala+683518"
+        >
+          Open in Google Maps ↗
+        </a>
       </div>
+
+      <div class="contact-block">
+        <span class="micro">Send a quick message</span>
+        <a 
+          style="font:400 24px RoelSerif, serif;margin-top:15px" 
+          href={whatsappChatUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+        >
+          Chat on WhatsApp ↗
+        </a>
+      </div>
+    </div>
+
+    <div class="form-panel">
+      <span class="eyebrow">An enquiry begins here</span>
+      <h3>Tell us what you<br />have in mind.</h3>
+      <ContactForm client:load />
     </div>
   </section>
 </Layout>

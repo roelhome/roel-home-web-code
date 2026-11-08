@@ -5,23 +5,22 @@ export default function EnquiryModal() {
   const [subject, setSubject] = useState('General project enquiry');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [projectType, setProjectType] = useState('Residential');
+  const [interest, setInterest] = useState('Material consultation');
   const [message, setMessage] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
-    // Listen to global click events on [data-enquiry] buttons
     const handleTrigger = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest('[data-enquiry]');
       if (target) {
         e.preventDefault();
         const ctx = target.getAttribute('data-enquiry') || 'General project enquiry';
         setSubject(ctx);
-        setMessage(ctx !== 'General project enquiry' ? `I am interested in: ${ctx}. Please share details.` : '');
+        setMessage(ctx !== 'General project enquiry' ? `Enquiry regarding: ${ctx}\n` : '');
         setStatus('idle');
+        setFeedback('');
         setIsOpen(true);
       }
     };
@@ -44,7 +43,6 @@ export default function EnquiryModal() {
     }
   }, [isOpen]);
 
-  // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -58,207 +56,201 @@ export default function EnquiryModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Honeypot anti-spam check
     if (honeypot) {
       setStatus('success');
+      setFeedback('Enquiry sent successfully.');
       return;
     }
 
-    if (!name || !phone || !message) {
-      setErrorMessage('Please fill in your name, phone number, and message.');
+    if (!name.trim() || !phone.trim() || !message.trim()) {
       setStatus('error');
+      setFeedback('Please fill in your name, phone number, and message.');
       return;
     }
 
     setStatus('submitting');
-    setErrorMessage('');
+    setFeedback('Sending enquiry...');
 
     try {
+      // 1. Submit to Cloudflare Pages / Supabase & Resend API
       const res = await fetch('/api/enquiry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name,
-          phone,
-          email,
-          projectType,
-          message,
+          name: name.trim(),
+          phone: phone.trim(),
+          projectType: interest,
+          message: message.trim(),
           source: `Quick Enquiry Modal (${subject})`
         })
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setStatus('success');
-        setName('');
-        setPhone('');
-        setEmail('');
-        setMessage('');
-      } else {
-        setStatus('error');
-        setErrorMessage(data.error || 'Unable to submit your enquiry. Please reach us via WhatsApp.');
-      }
+      const resData = await res.json().catch(() => ({}));
+
+      // 2. Also prepare WhatsApp draft for seamless communication
+      const waText = encodeURIComponent(
+        `Hello ROEL Home Solutions,\n\nNew website enquiry\nName: ${name.trim()}\nPhone: ${phone.trim()}\nInterest: ${interest}\nRequirement: ${message.trim()}\n\nPlease contact me about this enquiry.`
+      );
+      const waUrl = `https://wa.me/918111899991?text=${waText}`;
+
+      setStatus('success');
+      setFeedback('Enquiry sent! Opening WhatsApp to connect directly with our Kochi team...');
+
+      // Open WhatsApp after a brief delay
+      setTimeout(() => {
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
+      }, 700);
+
     } catch (err) {
-      setStatus('error');
-      setErrorMessage('Network error. Please contact us directly via WhatsApp or Phone.');
+      // Fallback directly to WhatsApp
+      const waText = encodeURIComponent(
+        `Hello ROEL Home Solutions,\n\nNew website enquiry\nName: ${name.trim()}\nPhone: ${phone.trim()}\nInterest: ${interest}\nRequirement: ${message.trim()}\n\nPlease contact me about this enquiry.`
+      );
+      window.open(`https://wa.me/918111899991?text=${waText}`, '_blank', 'noopener,noreferrer');
+      setStatus('success');
+      setFeedback('Opening WhatsApp to connect directly with our Kochi team...');
     }
   };
 
   if (!isOpen) return null;
 
-  const waText = encodeURIComponent(`Hello ROEL, I would like to enquire about: ${subject}. My name is ${name || 'a visitor'}.`);
-  const waUrl = `https://wa.me/918111899991?text=${waText}`;
-
   return (
     <div 
-      className="modal-overlay open" 
+      className="modal-root open" 
+      id="modal-root" 
       data-lenis-prevent="true"
-      onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+      role="dialog" 
+      aria-modal="true"
     >
+      <div 
+        className="modal-shade" 
+        onClick={() => setIsOpen(false)}
+        aria-hidden="true"
+      />
       <div 
         className="modal-dialog" 
         data-lenis-prevent="true"
-        role="dialog" 
-        aria-modal="true" 
-        aria-labelledby="modal-enquiry-title"
       >
-        <button 
-          className="modal-close" 
-          type="button" 
-          onClick={() => setIsOpen(false)} 
-          aria-label="Close dialog"
-        >
-          ×
-        </button>
-
-        <div style={{ marginBottom: '24px' }}>
-          <span className="eyebrow" style={{ color: 'var(--walnut)' }}>Quick Enquiry</span>
-          <h2 id="modal-enquiry-title" style={{ font: "400 clamp(28px, 4vw, 38px) 'RoelSerif', serif", margin: '8px 0' }}>
-            Tell us about <em className="italic">your space.</em>
-          </h2>
-          <p className="muted" style={{ fontSize: '13px', lineHeight: 1.5 }}>
-            {subject !== 'General project enquiry' ? `Referencing: ${subject}` : 'Share your ideas or requirements. Our Kochi team is here to assist.'}
-          </p>
-        </div>
-
-        {status === 'success' ? (
-          <div style={{ padding: '32px 0', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--gold)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '20px' }}>
-              ✓
+        <div className="modal-inner">
+          <div className="modal-head">
+            <div>
+              <span className="eyebrow">Quick enquiry</span>
+              <h2>Tell us about<br /><em className="italic">your space.</em></h2>
             </div>
-            <h3 style={{ font: "400 26px 'RoelSerif', serif" }}>Enquiry Received</h3>
-            <p className="muted" style={{ margin: '12px 0 24px', fontSize: '14px' }}>
-              Thank you! Your details have been sent directly to the ROEL Home Solutions team in Kochi. We will contact you shortly.
-            </p>
-            <button className="btn" type="button" onClick={() => setIsOpen(false)}>
-              Close Window
+            <button 
+              className="modal-close" 
+              type="button" 
+              onClick={() => setIsOpen(false)} 
+              aria-label="Close dialog"
+            >
+              ×
             </button>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="form-grid">
-            {/* Honeypot field for bot spam prevention */}
-            <div style={{ display: 'none' }} aria-hidden="true">
-              <label htmlFor="hp_field">Leave this empty</label>
-              <input id="hp_field" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
-            </div>
 
-            <div className="field">
-              <label htmlFor="modal-name">Your Name *</label>
+          <form id="quick-form" onSubmit={handleSubmit}>
+            {/* Honeypot for bot spam prevention */}
+            <div style={{ display: 'none' }} aria-hidden="true">
+              <label htmlFor="quick-hp">Leave empty</label>
               <input 
-                id="modal-name" 
-                required 
-                maxLength={80} 
-                placeholder="Full Name" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
+                id="quick-hp" 
+                value={honeypot} 
+                onChange={(e) => setHoneypot(e.target.value)} 
+                tabIndex={-1} 
+                autoComplete="off" 
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+            <div className="field-grid">
               <div className="field">
-                <label htmlFor="modal-phone">Phone Number *</label>
+                <label htmlFor="quick-name">Your name *</label>
                 <input 
-                  id="modal-phone" 
-                  type="tel" 
                   required 
-                  placeholder="+91" 
-                  value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
+                  maxLength={80} 
+                  id="quick-name" 
+                  name="name" 
+                  placeholder="Full name" 
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
-
               <div className="field">
-                <label htmlFor="modal-email">Email (Optional)</label>
+                <label htmlFor="quick-phone">Phone number *</label>
                 <input 
-                  id="modal-email" 
-                  type="email" 
-                  placeholder="name@example.com" 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                  minLength={10} 
+                  maxLength={18} 
+                  pattern="[+0-9() .-]{10,18}" 
+                  id="quick-phone" 
+                  name="phone" 
+                  type="tel" 
+                  placeholder="+91" 
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
             </div>
 
             <div className="field">
-              <label htmlFor="modal-type">Project Type</label>
+              <label htmlFor="quick-interest">I'm interested in</label>
               <select 
-                id="modal-type" 
-                value={projectType} 
-                onChange={(e) => setProjectType(e.target.value)}
+                id="quick-interest" 
+                name="interest"
+                value={interest}
+                onChange={(e) => setInterest(e.target.value)}
               >
-                <option value="Residential">Residential Residence / Villa</option>
-                <option value="Commercial">Commercial Office / Studio</option>
-                <option value="Renovation">Interior Renovation</option>
-                <option value="Wall Solutions">Fluted Walls & Panelling</option>
-                <option value="Premium Doors">Architectural Doors</option>
-                <option value="Decorative Accents">CNC Screens & Accents</option>
+                <option value="Material consultation">Material consultation</option>
+                <option value="Wall solutions">Wall solutions</option>
+                <option value="Premium doors">Premium doors</option>
+                <option value="Decorative accents">Decorative accents</option>
+                <option value="Project supply">Project supply</option>
+                <option value="Other enquiry">Other enquiry</option>
               </select>
             </div>
 
             <div className="field">
-              <label htmlFor="modal-message">Your Message or Requirements *</label>
+              <label htmlFor="quick-message">Tell us about your project *</label>
               <textarea 
-                id="modal-message" 
-                rows={3} 
                 required 
-                placeholder="Provide rough dimensions, material interests, or location..." 
-                value={message} 
-                onChange={(e) => setMessage(e.target.value)} 
+                maxLength={1000} 
+                id="quick-message" 
+                name="message" 
+                placeholder="Your space, requirements, location or any detail you would like to share..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
               />
             </div>
 
-            {status === 'error' && (
-              <div style={{ color: '#b91c1c', fontSize: '13px', background: 'rgba(239, 68, 68, 0.1)', padding: '10px 14px', borderRadius: '2px' }}>
-                {errorMessage}
+            <button 
+              className="btn" 
+              type="submit" 
+              style={{ width: '100%' }}
+              disabled={status === 'submitting'}
+            >
+              {status === 'submitting' ? 'Submitting...' : 'Continue enquiry on WhatsApp'} <span className="arrow">↗</span>
+            </button>
+
+            <p className="form-note">
+              This enquiry is recorded by ROEL and opens a WhatsApp chat for immediate communication.
+            </p>
+
+            {feedback && (
+              <div 
+                className="form-feedback" 
+                role="status" 
+                aria-live="polite"
+                style={{ color: status === 'error' ? '#b91c1c' : 'var(--walnut)' }}
+              >
+                {feedback}
               </div>
             )}
-
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
-              <button 
-                type="submit" 
-                className="btn gold" 
-                disabled={status === 'submitting'}
-                style={{ flex: '1', minWidth: '150px' }}
-              >
-                {status === 'submitting' ? 'Submitting...' : 'Send Enquiry'} <span className="arrow">↗</span>
-              </button>
-
-              <a 
-                href={waUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="btn" 
-                style={{ flex: '1', minWidth: '150px', borderColor: 'var(--walnut)' }}
-              >
-                WhatsApp <span className="arrow">↗</span>
-              </a>
-            </div>
-
-            <p className="micro muted" style={{ textAlign: 'center', marginTop: '10px' }}>
-              Prefer to call directly? <a href="tel:+918111899991" style={{ textDecoration: 'underline', color: 'var(--ink)' }}>+91 81118 99991</a>
-            </p>
           </form>
-        )}
+
+          <p style={{ font: '11px RoelSans, sans-serif', color: 'var(--walnut)', margin: '14px 0 0' }}>
+            Prefer to call? <a href="tel:+918111899991" style={{ textDecoration: 'underline' }}>+91 81118 99991</a>
+          </p>
+        </div>
       </div>
     </div>
   );

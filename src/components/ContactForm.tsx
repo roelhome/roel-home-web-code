@@ -3,175 +3,166 @@ import React, { useState } from 'react';
 export default function ContactForm() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [projectType, setProjectType] = useState('Residential Residence');
+  const [interest, setInterest] = useState('Material consultation');
   const [message, setMessage] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (honeypot) {
       setStatus('success');
+      setFeedback('Enquiry sent.');
       return;
     }
 
-    if (!name || !phone || !message) {
-      setErrorMessage('Please fill in your name, phone number, and message.');
+    if (!name.trim() || !phone.trim() || !message.trim()) {
       setStatus('error');
+      setFeedback('Please fill in your name, phone number, and message.');
       return;
     }
 
     setStatus('submitting');
-    setErrorMessage('');
+    setFeedback('Sending enquiry...');
 
     try {
-      const res = await fetch('/api/enquiry', {
+      // 1. Submit to API endpoint
+      await fetch('/api/enquiry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name,
-          phone,
-          email,
-          projectType,
-          message,
+          name: name.trim(),
+          phone: phone.trim(),
+          projectType: interest,
+          message: message.trim(),
           source: 'Contact Page Form'
         })
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setStatus('success');
-        setName('');
-        setPhone('');
-        setEmail('');
-        setMessage('');
-      } else {
-        setStatus('error');
-        setErrorMessage(data.error || 'Failed to submit enquiry. Please call us directly.');
-      }
+      // 2. Prepare WhatsApp message
+      const waText = encodeURIComponent(
+        `Hello ROEL Home Solutions,\n\nNew website enquiry\nName: ${name.trim()}\nPhone: ${phone.trim()}\nInterest: ${interest}\nRequirement: ${message.trim()}\n\nPlease contact me about this enquiry.`
+      );
+      const waUrl = `https://wa.me/918111899991?text=${waText}`;
+
+      setStatus('success');
+      setFeedback('Enquiry sent! Opening WhatsApp to connect directly with our Kochi team...');
+
+      setTimeout(() => {
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
+      }, 700);
+
     } catch (err) {
-      setStatus('error');
-      setErrorMessage('Network connection error. Please call us at +91 81118 99991.');
+      const waText = encodeURIComponent(
+        `Hello ROEL Home Solutions,\n\nNew website enquiry\nName: ${name.trim()}\nPhone: ${phone.trim()}\nInterest: ${interest}\nRequirement: ${message.trim()}\n\nPlease contact me about this enquiry.`
+      );
+      window.open(`https://wa.me/918111899991?text=${waText}`, '_blank', 'noopener,noreferrer');
+      setStatus('success');
+      setFeedback('Opening WhatsApp to connect directly with our Kochi team...');
     }
   };
 
-  if (status === 'success') {
-    return (
-      <div style={{ background: 'rgba(212, 158, 88, 0.12)', border: '1px solid var(--gold)', padding: '40px', borderRadius: '2px', textAlign: 'center' }}>
-        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--gold)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '20px' }}>
-          ✓
-        </div>
-        <h3 style={{ font: "400 32px 'RoelSerif', serif", margin: '8px 0' }}>Thank You for Reaching Out</h3>
-        <p className="muted" style={{ maxWidth: '440px', margin: '12px auto 24px' }}>
-          We have received your enquiry. Our team in Kochi will review your project details and reach out via phone or WhatsApp shortly.
-        </p>
-        <button 
-          type="button" 
-          className="btn" 
-          onClick={() => setStatus('idle')}
-        >
-          Send Another Message
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="form-grid">
+    <form id="contact-form" onSubmit={handleSubmit}>
+      {/* Honeypot field */}
       <div style={{ display: 'none' }} aria-hidden="true">
-        <input value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+        <label htmlFor="contact-hp">Leave empty</label>
+        <input 
+          id="contact-hp" 
+          value={honeypot} 
+          onChange={(e) => setHoneypot(e.target.value)} 
+          tabIndex={-1} 
+          autoComplete="off" 
+        />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div className="field-grid">
         <div className="field">
-          <label htmlFor="contact-name">Your Full Name *</label>
+          <label htmlFor="contact-name">Your name *</label>
           <input 
-            id="contact-name" 
             required 
             maxLength={80} 
-            placeholder="e.g. Rahul Menon" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
+            id="contact-name" 
+            name="name" 
+            placeholder="Full name" 
+            autoComplete="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
         </div>
-
         <div className="field">
-          <label htmlFor="contact-phone">Phone Number *</label>
+          <label htmlFor="contact-phone">Phone number *</label>
           <input 
-            id="contact-phone" 
-            type="tel" 
             required 
-            placeholder="+91 98..." 
-            value={phone} 
-            onChange={(e) => setPhone(e.target.value)} 
+            minLength={10} 
+            maxLength={18} 
+            pattern="[+0-9() .-]{10,18}" 
+            id="contact-phone" 
+            name="phone" 
+            type="tel" 
+            placeholder="+91" 
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <div className="field">
-          <label htmlFor="contact-email">Email Address</label>
-          <input 
-            id="contact-email" 
-            type="email" 
-            placeholder="rahul@example.com" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="contact-project-type">Project Classification</label>
-          <select 
-            id="contact-project-type" 
-            value={projectType} 
-            onChange={(e) => setProjectType(e.target.value)}
-          >
-            <option value="Residential Residence">Residential Residence / Villa</option>
-            <option value="Commercial Project">Commercial / Office Interior</option>
-            <option value="Architectural Renovation">Architectural Renovation</option>
-            <option value="Fluted Wall Panelling">Fluted Wall Panelling</option>
-            <option value="Signature Doors">Signature Wooden Doors</option>
-            <option value="Material Consultation">Material Consultation Only</option>
-          </select>
         </div>
       </div>
 
       <div className="field">
-        <label htmlFor="contact-message">Project Description & Requirements *</label>
+        <label htmlFor="contact-interest">I'm interested in</label>
+        <select 
+          id="contact-interest" 
+          name="interest"
+          value={interest}
+          onChange={(e) => setInterest(e.target.value)}
+        >
+          <option value="Material consultation">Material consultation</option>
+          <option value="Wall solutions">Wall solutions</option>
+          <option value="Premium doors">Premium doors</option>
+          <option value="Decorative accents">Decorative accents</option>
+          <option value="Project supply">Project supply</option>
+          <option value="Other enquiry">Other enquiry</option>
+        </select>
+      </div>
+
+      <div className="field">
+        <label htmlFor="contact-message">Tell us about your project *</label>
         <textarea 
-          id="contact-message" 
-          rows={5} 
           required 
-          placeholder="Tell us about the space, room sizes, design preferences, or materials you are looking to source..." 
-          value={message} 
-          onChange={(e) => setMessage(e.target.value)} 
+          maxLength={1000} 
+          id="contact-message" 
+          name="message" 
+          placeholder="Your space, requirements, location or any detail you would like to share..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
         />
       </div>
 
-      {status === 'error' && (
-        <div style={{ color: '#b91c1c', fontSize: '13px', background: 'rgba(239, 68, 68, 0.1)', padding: '12px 16px', borderRadius: '2px' }}>
-          {errorMessage}
+      <button 
+        className="btn" 
+        type="submit" 
+        style={{ width: '100%' }}
+        disabled={status === 'submitting'}
+      >
+        {status === 'submitting' ? 'Submitting...' : 'Continue enquiry on WhatsApp'} <span className="arrow">↗</span>
+      </button>
+
+      <p className="form-note">
+        This enquiry is recorded by ROEL and opens a WhatsApp chat for immediate communication.
+      </p>
+
+      {feedback && (
+        <div 
+          className="form-feedback" 
+          role="status" 
+          aria-live="polite"
+          style={{ color: status === 'error' ? '#b91c1c' : 'var(--walnut)' }}
+        >
+          {feedback}
         </div>
       )}
-
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
-        <button 
-          type="submit" 
-          className="btn gold" 
-          disabled={status === 'submitting'}
-          style={{ minWidth: '200px' }}
-        >
-          {status === 'submitting' ? 'Submitting...' : 'Submit Message'} <span className="arrow">↗</span>
-        </button>
-
-        <span className="micro muted">
-          Direct Line: <a href="tel:+918111899991" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>+91 81118 99991</a>
-        </span>
-      </div>
     </form>
   );
 }

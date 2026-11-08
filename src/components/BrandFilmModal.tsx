@@ -51,41 +51,47 @@ export default function BrandFilmModal() {
 
   return (
     <div 
-      className="modal-overlay open" 
+      className="modal-root open" 
       data-lenis-prevent="true"
-      onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+      role="dialog" 
+      aria-modal="true"
     >
+      <div 
+        className="modal-shade" 
+        onClick={() => setIsOpen(false)}
+        aria-hidden="true"
+      />
       <div 
         className="modal-dialog video-dialog" 
         data-lenis-prevent="true"
-        role="dialog" 
-        aria-modal="true" 
-        aria-label="Brand Film Preview"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <p style={{ color: 'var(--champagne)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>
-            ROEL / Materials in motion &nbsp;·&nbsp; Design preview
-          </p>
-          <button 
-            className="modal-close" 
-            type="button" 
-            onClick={() => setIsOpen(false)} 
-            aria-label="Close brand film"
-          >
-            ×
-          </button>
-        </div>
-
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
+        <div className="modal-inner">
+          <div className="video-top">
+            <p>ROEL / materials in motion &nbsp; · &nbsp; visual concept preview</p>
+            <button 
+              className="modal-close" 
+              type="button" 
+              onClick={() => setIsOpen(false)} 
+              aria-label="Close film"
+            >
+              ×
+            </button>
+          </div>
           <video 
             ref={videoRef}
             src="/videos/video.mp4" 
             poster="/images/hero.webp"
             controls 
             playsInline 
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            autoPlay
+            preload="metadata"
             aria-label="ROEL architectural visual concept preview"
-          />
+          >
+            Your browser does not support HTML video.
+          </video>
+          <p style={{ fontSize: '10px', color: 'var(--champagne)', margin: '11px 4px 0', lineHeight: 1.6 }}>
+            Illustrative mood film assembled from reference imagery — showcasing architectural materials and light.
+          </p>
         </div>
       </div>
     </div>

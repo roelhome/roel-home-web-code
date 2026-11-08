@@ -1,131 +1,107 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import CtaBand from '../components/CtaBand.astro';
 ---
 
 <Layout 
-  title="Our Story & Identity | ROEL Home Solutions Kochi"
-  description="Learn about ROEL Home Solutions in Kochi, Kerala — an emerging architectural materials brand dedicated to elevating residential and commercial spaces."
+  title="Our Story | ROEL Home Solutions"
+  description="Meet ROEL Home Solutions — an emerging architectural materials brand shaped by quality, design and lasting relationships."
 >
-  <!-- Page Header -->
-  <section class="section" style="padding-bottom:48px;">
+  <section class="page-hero">
     <div class="container">
-      <div style="border-bottom:1px solid var(--line);padding-bottom:48px;">
-        <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">Our Story</span>
-        <h1 style="font:400 clamp(48px, 6vw, 92px)/0.95 'RoelSerif', serif;margin-bottom:20px;">
-          Creating spaces.<br /><em>Defining living.</em>
-        </h1>
-        <p style="font-size:18px;color:var(--muted);max-width:640px;line-height:1.6;">
-          Meet ROEL Home Solutions — an emerging architectural materials brand shaped by quality, design discipline and lasting partnerships across Kerala.
-        </p>
-      </div>
+      <span class="eyebrow">Our story</span>
+      <h1>Creating spaces.<br /><em>Defining living.</em></h1>
+      <p>Meet ROEL Home Solutions — an emerging architectural materials brand shaped by quality, design and lasting relationships.</p>
     </div>
   </section>
 
-  <!-- Lead Narrative -->
-  <section class="section" style="padding-top:0;">
-    <div class="container" style="display:grid;grid-template-columns:1fr 1.2fr;gap:64px;align-items:start;">
-      <div class="gsap-fade-up">
-        <span class="eyebrow" style="color:var(--walnut);">The ROEL Identity</span>
-        <h2 style="font:400 clamp(38px, 4.5vw, 64px)/1.05 'RoelSerif', serif;margin:16px 0 24px;">
-          Spaces<br /><em class="italic">elevated.</em>
-        </h2>
-        <div style="aspect-ratio:4/5;overflow:hidden;background:rgba(118,89,65,0.1);margin-top:32px;border:1px solid var(--line);">
-          <img src="/images/living.webp" alt="ROEL interior architectural space" style="width:100%;height:100%;object-fit:cover;" />
-        </div>
-      </div>
-
-      <div class="gsap-fade-up" style="display:flex;flex-direction:column;gap:24px;font-size:16px;line-height:1.8;color:var(--ink);">
-        <p>
-          ROEL Home Solutions is founded on the conviction that interior surfaces are not merely passive backgrounds; they shape the emotional resonance, tactile warmth, and visual balance of every room.
-        </p>
-        <p>
-          Headquartered in Kochi, Kerala, we collaborate closely with discerning homeowners, visionary architects, and interior designers to deliver architectural wall solutions, precision-crafted doors, and bespoke decorative partitions that stand the test of time.
-        </p>
-
-        <div style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:32px 0;margin:16px 0;">
-          <h3 style="font:400 28px 'RoelSerif', serif;margin-bottom:20px;color:var(--walnut);">
-            Core Design Principles
-          </h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-            <div>
-              <span class="micro" style="color:var(--gold);">01 / Material Integrity</span>
-              <p style="font-size:14px;color:var(--muted);margin-top:6px;">
-                Selecting wood profiles, fluted geometries, and finishes with genuine tactile substance.
-              </p>
-            </div>
-            <div>
-              <span class="micro" style="color:var(--gold);">02 / Proportional Harmony</span>
-              <p style="font-size:14px;color:var(--muted);margin-top:6px;">
-                Details that integrate cleanly into ceiling lines, skirting profiles, and open layouts.
-              </p>
-            </div>
-            <div>
-              <span class="micro" style="color:var(--gold);">03 / Custom Flexibility</span>
-              <p style="font-size:14px;color:var(--muted);margin-top:6px;">
-                Bespoke sizing, finish sampling, and fabrication coordination for unique residential briefs.
-              </p>
-            </div>
-            <div>
-              <span class="micro" style="color:var(--gold);">04 / Enduring Support</span>
-              <p style="font-size:14px;color:var(--muted);margin-top:6px;">
-                Direct project communication from initial consultation to final site dispatch.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <p>
-          Whether crafting a rhythmic fluted media backdrop, a statement entryway oak door, or a laser-cut botanical room divider, we balance modern precision with architectural grace.
-        </p>
-
-        <div style="display:flex;gap:20px;margin-top:16px;flex-wrap:wrap;">
-          <button type="button" class="btn gold" data-enquiry="Consultation from About Page">
-            Start a Conversation <span class="arrow">↗</span>
-          </button>
-          <a href="/catalogue" class="btn">
-            Explore Materials <span class="arrow">↗</span>
-          </a>
-        </div>
-      </div>
+  <section class="container about-lead">
+    <div>
+      <span class="eyebrow">The ROEL identity</span>
+      <h2>Spaces<br /><em class="italic">elevated.</em></h2>
+    </div>
+    <div>
+      <p>ROEL Home Solutions is an emerging premium brand focused on architectural materials, doors, wall solutions and decorative products for modern spaces.</p>
+      <p>We believe that exceptional spaces begin with the right materials, thoughtful design and attention to detail. Our approach brings together aesthetics, functionality and quality to help create environments that reflect individual style and modern living.</p>
+      <p>Our carefully selected products are designed to meet the evolving needs of homeowners, architects, interior designers, builders and industry professionals.</p>
+      <p>At ROEL, we aim to make architectural and decorative solutions more accessible through quality-driven products, contemporary designs and customer-focused service.</p>
     </div>
   </section>
 
-  <!-- Brand Palette Showcase -->
-  <section class="section" style="background:var(--ink);color:var(--ivory);">
+  <div class="container about-feature-image">
+    <img src="/images/wave.webp" alt="Architectural wood surfaces with flowing dimensional detailing" loading="lazy" />
+  </div>
+
+  <section class="container" style="padding:90px 0">
+    <span class="eyebrow">Building for what comes next</span>
+    <div class="intro-block" style="margin-top:25px">
+      <h2 class="intro-statement serif">A brand with a <em>long view.</em></h2>
+      <p style="line-height:2;color:var(--muted);margin:0">
+        Our journey is driven by a long-term vision to grow beyond individual product categories and become a comprehensive architectural materials company. With a commitment to continuous improvement and thoughtful expansion, ROEL is building a brand that brings together materials, design and modern living.
+      </p>
+    </div>
+  </section>
+
+  <section class="vision-mission">
+    <div>
+      <span class="eyebrow" style="color:var(--champagne)">01 / Our vision</span>
+      <h2>Looking <em class="italic">ahead.</em></h2>
+      <p>To establish ROEL as a trusted and recognised name in the architectural materials industry, expanding our presence through innovative products, quality standards and meaningful customer relationships.</p>
+    </div>
+    <div>
+      <span class="eyebrow" style="color:var(--champagne)">02 / Our mission</span>
+      <h2>Built on <em class="italic">purpose.</em></h2>
+      <p>To deliver thoughtfully selected architectural products that combine design, durability and functionality while creating lasting value for our customers.</p>
+    </div>
+  </section>
+
+  <section class="section">
     <div class="container">
-      <div style="text-align:center;max-width:640px;margin:0 auto 48px;">
-        <span class="eyebrow" style="color:var(--champagne);justify-content:center;margin-bottom:12px;">Brand Palette</span>
-        <h2 style="font:400 clamp(36px, 4vw, 54px) 'RoelSerif', serif;">
-          Tones drawn from <em class="italic" style="color:var(--champagne);">earth &amp; timber.</em>
-        </h2>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">What we stand for</span>
+          <h2>The values behind <em class="italic">ROEL.</em></h2>
+        </div>
       </div>
-
-      <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:16px;">
-        <div style="background:#765941;padding:24px;border-radius:2px;display:flex;flex-direction:column;justify-content:flex-end;height:120px;">
-          <strong style="color:#FAF7F2;font-size:13px;">Walnut</strong>
-          <span style="font-size:10px;opacity:0.8;font-family:monospace;">#765941</span>
-        </div>
-        <div style="background:#E5BF8C;padding:24px;border-radius:2px;display:flex;flex-direction:column;justify-content:flex-end;height:120px;color:#19120C;">
-          <strong style="font-size:13px;">Champagne</strong>
-          <span style="font-size:10px;opacity:0.8;font-family:monospace;">#E5BF8C</span>
-        </div>
-        <div style="background:#D49E58;padding:24px;border-radius:2px;display:flex;flex-direction:column;justify-content:flex-end;height:120px;color:#19120C;">
-          <strong style="font-size:13px;">Gold</strong>
-          <span style="font-size:10px;opacity:0.8;font-family:monospace;">#D49E58</span>
-        </div>
-        <div style="background:#D7B691;padding:24px;border-radius:2px;display:flex;flex-direction:column;justify-content:flex-end;height:120px;color:#19120C;">
-          <strong style="font-size:13px;">Sand</strong>
-          <span style="font-size:10px;opacity:0.8;font-family:monospace;">#D7B691</span>
-        </div>
-        <div style="background:#F0E2CE;padding:24px;border-radius:2px;display:flex;flex-direction:column;justify-content:flex-end;height:120px;color:#19120C;">
-          <strong style="font-size:13px;">Ivory</strong>
-          <span style="font-size:10px;opacity:0.8;font-family:monospace;">#F0E2CE</span>
-        </div>
+      <div class="values-grid">
+        <article class="value-card">
+          <span class="num">01</span>
+          <h3>Quality</h3>
+          <p>Prioritising reliable materials and lasting performance.</p>
+        </article>
+        <article class="value-card">
+          <span class="num">02</span>
+          <h3>Design Excellence</h3>
+          <p>Embracing contemporary aesthetics and thoughtful details.</p>
+        </article>
+        <article class="value-card">
+          <span class="num">03</span>
+          <h3>Trust</h3>
+          <p>Building relationships through transparency and commitment.</p>
+        </article>
+        <article class="value-card">
+          <span class="num">04</span>
+          <h3>Innovation</h3>
+          <p>Continuously exploring better materials, products and solutions.</p>
+        </article>
+        <article class="value-card">
+          <span class="num">05</span>
+          <h3>Customer Commitment</h3>
+          <p>Understanding individual requirements and delivering the right solutions.</p>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- CTA Band -->
-  <CtaBand />
+  <section class="cta-band">
+    <div class="container cta-row">
+      <div>
+        <span class="eyebrow">The next chapter starts here</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>Tell us what you are creating. We will help you explore the material direction for your home or project.</p>
+        <button class="btn" type="button" data-enquiry="Consultation for a new space">Start a conversation <span class="arrow">↗</span></button>
+      </div>
+    </div>
+  </section>
 </Layout>

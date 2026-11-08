@@ -1,45 +1,36 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import CtaBand from '../../components/CtaBand.astro';
 import CatalogueFilter from '../../components/CatalogueFilter';
-import { getProducts } from '../../lib/supabase';
-
-const products = await getProducts();
+import { products } from '../../data/originalData.js';
 ---
 
 <Layout 
-  title="Architectural Products & Wall Solutions | ROEL Home Solutions Kochi"
-  description="Explore ROEL's curated architectural materials: Walnut fluted wall panels, signature oak doors, and botanical CNC decorative screens in Kochi, Kerala."
+  title="Our Products | ROEL Home Solutions"
+  description="A considered range of architectural surfaces, doors and decorative features for contemporary spaces."
 >
-  <!-- Page Header -->
-  <section class="section" style="padding-bottom:48px;">
+  <section class="page-hero">
     <div class="container">
-      <div style="border-bottom:1px solid var(--line);padding-bottom:48px;">
-        <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">The ROEL Edit</span>
-        <h1 style="font:400 clamp(48px, 6vw, 92px)/0.95 'RoelSerif', serif;margin-bottom:20px;">
-          Our <em>products.</em>
-        </h1>
-        <p style="font-size:18px;color:var(--muted);max-width:600px;line-height:1.6;">
-          A considered range of architectural surfaces, doors and decorative features for contemporary spaces across Kerala.
-        </p>
+      <span class="eyebrow">The ROEL edit</span>
+      <h1>Our <em>products.</em></h1>
+      <p>A considered range of architectural surfaces, doors and decorative features for contemporary spaces.</p>
+      <div class="page-count">03</div>
+    </div>
+  </section>
+
+  <section class="catalogue-section">
+    <CatalogueFilter client:load initialProducts={products} />
+  </section>
+
+  <section class="cta-band">
+    <div class="container cta-row">
+      <div>
+        <span class="eyebrow">The next chapter starts here</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>Tell us what you are creating. We will help you explore the material direction for your home or project.</p>
+        <button class="btn" type="button" data-enquiry="Consultation for a new space">Start a conversation <span class="arrow">↗</span></button>
       </div>
     </div>
   </section>
-
-  <!-- Interactive Catalogue Filter & Products Grid -->
-  <section class="section" style="padding-top:0;">
-    <div class="container">
-      <CatalogueFilter client:load initialProducts={products} />
-    </div>
-  </section>
-
-  <!-- CTA Band -->
-  <CtaBand 
-    eyebrow="Custom specifications"
-    title="Need custom sizes or"
-    italicWord="special finishes?"
-    description="We fabricate bespoke fluted wall panels, CNC partitions, and wooden doors according to your project blueprints."
-    buttonText="Enquire Custom Sizes"
-    enquiryContext="Custom product sizing and finish specifications"
-  />
 </Layout>

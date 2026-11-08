@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { initialProducts } from '../data/products';
-import { initialServices } from '../data/services';
-import { initialProjects } from '../data/projects';
+import { products, services, projects } from '../data/originalData.js';
 
 export default function SearchModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,7 +9,7 @@ export default function SearchModal() {
   useEffect(() => {
     // Open on search button click
     const handleTrigger = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest('#open-search-btn');
+      const target = (e.target as HTMLElement).closest('#search-trigger');
       if (target) {
         e.preventDefault();
         setIsOpen(true);
@@ -56,137 +54,111 @@ export default function SearchModal() {
     }
   }, [isOpen]);
 
-  // Filter items
-  const cleanQ = query.trim().toLowerCase();
-  const matchedProducts = cleanQ
-    ? initialProducts.filter(p => p.name.toLowerCase().includes(cleanQ) || p.category.toLowerCase().includes(cleanQ) || p.short.toLowerCase().includes(cleanQ))
-    : [];
-  const matchedServices = cleanQ
-    ? initialServices.filter(s => s.name.toLowerCase().includes(cleanQ) || s.summary.toLowerCase().includes(cleanQ))
-    : [];
-  const matchedProjects = cleanQ
-    ? initialProjects.filter(pj => pj.name.toLowerCase().includes(cleanQ) || pj.location.toLowerCase().includes(cleanQ) || pj.category.toLowerCase().includes(cleanQ))
-    : [];
+  const searchItems = [
+    ...products.map((p) => ({
+      title: p.name,
+      type: 'Product',
+      url: `/product/${p.id}`,
+      desc: p.category
+    })),
+    ...services.map((s) => ({
+      title: s.name,
+      type: 'Service',
+      url: `/service/${s.id}`,
+      desc: s.tag || s.summary
+    })),
+    ...projects.map((p) => ({
+      title: p.name,
+      type: 'Project',
+      url: `/project/${p.id}`,
+      desc: p.location
+    })),
+    {
+      title: 'Our Story',
+      type: 'Information',
+      url: '/about',
+      desc: 'The ROEL philosophy & values'
+    },
+    {
+      title: 'Contact us',
+      type: 'Information',
+      url: '/contact',
+      desc: 'Visit, phone and consultation enquiry'
+    }
+  ];
 
-  const totalMatches = matchedProducts.length + matchedServices.length + matchedProjects.length;
+  const cleanQ = query.trim().toLowerCase();
+  const matched = cleanQ
+    ? searchItems.filter((x) =>
+        (x.title + ' ' + x.desc + ' ' + x.type).toLowerCase().includes(cleanQ)
+      ).slice(0, 10)
+    : searchItems.slice(0, 5);
 
   if (!isOpen) return null;
 
   return (
     <div 
-      className="modal-overlay open" 
+      className="modal-root open" 
       data-lenis-prevent="true"
-      onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+      role="dialog" 
+      aria-modal="true"
     >
       <div 
-        className="modal-dialog" 
+        className="modal-shade" 
+        onClick={() => setIsOpen(false)} 
+        aria-hidden="true" 
+      />
+      <div 
+        className="modal-dialog search-box" 
         data-lenis-prevent="true"
-        style={{ width: 'min(680px, 95%)', maxHeight: 'calc(100vh - 64px)', padding: '36px 32px' }}
       >
-        <button 
-          className="modal-close" 
-          type="button" 
-          onClick={() => setIsOpen(false)} 
-          aria-label="Close search"
-        >
-          ×
-        </button>
-
-        <span className="eyebrow" style={{ color: 'var(--walnut)' }}>Quick Search</span>
-        <div style={{ position: 'relative', margin: '16px 0 24px' }}>
+        <div className="search-head">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#765941" strokeWidth="1.8">
+            <circle cx="10.8" cy="10.8" r="6.8" />
+            <path d="m16 16 5 5" />
+          </svg>
           <input 
             ref={inputRef}
-            type="text" 
-            placeholder="Search products, fluted walls, doors, screens, projects..." 
+            type="search" 
+            id="site-search" 
+            placeholder="Search materials, services, projects..." 
+            aria-label="Search ROEL website" 
+            autoComplete="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ width: '100%', fontSize: '18px', padding: '16px 20px', border: '1px solid var(--gold)', borderRadius: '2px', background: '#fff' }}
           />
+          <button 
+            type="button" 
+            className="modal-close" 
+            onClick={() => setIsOpen(false)} 
+            aria-label="Close search"
+          >
+            ×
+          </button>
         </div>
 
-        {cleanQ ? (
-          <div>
-            <div className="micro muted" style={{ marginBottom: '16px' }}>
-              {totalMatches} result{totalMatches === 1 ? '' : 's'} for &ldquo;{query}&rdquo;
-            </div>
-
-            {totalMatches === 0 && (
-              <p className="muted" style={{ padding: '24px 0', textAlign: 'center' }}>
-                No materials or projects found matching &ldquo;{query}&rdquo;.
-              </p>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '45vh', overflowY: 'auto' }} data-lenis-prevent="true">
-              {matchedProducts.map(p => (
-                <a 
-                  key={p.id} 
-                  href={`/product/${p.id}`} 
-                  onClick={() => setIsOpen(false)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', background: 'rgba(255,255,255,0.7)', border: '1px solid var(--line)', borderRadius: '2px', transition: 'background 0.2s' }}
-                >
-                  <img src={p.image} alt={p.name} style={{ width: '56px', height: '56px', objectFit: 'cover' }} />
-                  <div style={{ flex: 1 }}>
-                    <span className="micro" style={{ color: 'var(--walnut)' }}>{p.category} &nbsp;·&nbsp; {p.sku}</span>
-                    <h4 style={{ font: "400 18px 'RoelSerif', serif", margin: '2px 0' }}>{p.name}</h4>
-                    <p className="muted" style={{ fontSize: '12px', margin: 0 }}>{p.price}</p>
-                  </div>
-                  <span style={{ fontSize: '16px', color: 'var(--gold)' }}>↗</span>
-                </a>
-              ))}
-
-              {matchedServices.map(s => (
-                <a 
-                  key={s.id} 
-                  href={`/services#${s.id}`} 
-                  onClick={() => setIsOpen(false)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', background: 'rgba(255,255,255,0.7)', border: '1px solid var(--line)', borderRadius: '2px' }}
-                >
-                  <img src={s.image} alt={s.name} style={{ width: '56px', height: '56px', objectFit: 'cover' }} />
-                  <div style={{ flex: 1 }}>
-                    <span className="micro" style={{ color: 'var(--walnut)' }}>Service / {s.number}</span>
-                    <h4 style={{ font: "400 18px 'RoelSerif', serif", margin: '2px 0' }}>{s.name}</h4>
-                    <p className="muted" style={{ fontSize: '12px', margin: 0 }}>{s.summary}</p>
-                  </div>
-                  <span style={{ fontSize: '16px', color: 'var(--gold)' }}>↗</span>
-                </a>
-              ))}
-
-              {matchedProjects.map(pj => (
-                <a 
-                  key={pj.id} 
-                  href={`/project/${pj.id}`} 
-                  onClick={() => setIsOpen(false)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', background: 'rgba(255,255,255,0.7)', border: '1px solid var(--line)', borderRadius: '2px' }}
-                >
-                  <img src={pj.image} alt={pj.name} style={{ width: '56px', height: '56px', objectFit: 'cover' }} />
-                  <div style={{ flex: 1 }}>
-                    <span className="micro" style={{ color: 'var(--walnut)' }}>Project &nbsp;·&nbsp; {pj.location}</span>
-                    <h4 style={{ font: "400 18px 'RoelSerif', serif", margin: '2px 0' }}>{pj.name}</h4>
-                    <p className="muted" style={{ fontSize: '12px', margin: 0 }}>{pj.summary}</p>
-                  </div>
-                  <span style={{ fontSize: '16px', color: 'var(--gold)' }}>↗</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div style={{ padding: '16px 0' }}>
-            <span className="micro muted">Quick Suggestions</span>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-              {['Wall Panel', 'Door', 'Screen', 'Consultation', 'Kochi', 'Verandah'].map(suggestion => (
-                <button 
-                  key={suggestion}
-                  type="button" 
-                  className="filter-chip"
-                  onClick={() => setQuery(suggestion)}
-                  style={{ fontSize: '11px', padding: '6px 14px' }}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="search-results" id="search-results">
+          {matched.length > 0 ? (
+            matched.map((item, idx) => (
+              <a 
+                key={idx} 
+                className="search-result" 
+                href={item.url}
+                onClick={() => setIsOpen(false)}
+              >
+                <span>
+                  <strong>{item.title}</strong>
+                  <small>{item.type} / {item.desc}</small>
+                </span>
+                <span className="arrow">↗</span>
+              </a>
+            ))
+          ) : (
+            <p style={{ padding: '22px 0', color: 'var(--muted)' }}>
+              No results for "{query}". Try “doors”, “materials”, “wall” or “projects”.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

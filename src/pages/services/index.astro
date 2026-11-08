@@ -1,75 +1,48 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import CtaBand from '../../components/CtaBand.astro';
-import { getServices } from '../../lib/supabase';
-
-const services = await getServices();
+import { services, imgSrc } from '../../data/originalData.js';
 ---
 
 <Layout 
-  title="Architectural Services & Consultation | ROEL Home Solutions Kochi"
-  description="Explore ROEL's practice: Material consultation, custom design detailing, and architectural supply coordination for residences and commercial spaces in Kerala."
+  title="Our Services | ROEL Home Solutions"
+  description="Care in every detail. The best outcomes come from the right conversations, decisions and materials at the right time."
 >
-  <!-- Page Header -->
-  <section class="section" style="padding-bottom:48px;">
+  <section class="page-hero">
     <div class="container">
-      <div style="border-bottom:1px solid var(--line);padding-bottom:48px;">
-        <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">Our Practice</span>
-        <h1 style="font:400 clamp(48px, 6vw, 92px)/0.95 'RoelSerif', serif;margin-bottom:20px;">
-          Care in <em>every detail.</em>
-        </h1>
-        <p style="font-size:18px;color:var(--muted);max-width:640px;line-height:1.6;">
-          The best architectural outcomes come from the right conversations, decisions and material choices at the right time.
-        </p>
-      </div>
+      <span class="eyebrow">Our practice</span>
+      <h1>Care in <em>every detail.</em></h1>
+      <p>The best outcomes come from the right conversations, decisions and materials at the right time.</p>
+      <div class="page-count">03</div>
     </div>
   </section>
 
-  <!-- Detailed Services List -->
-  <section class="section" style="padding-top:0;">
-    <div class="container" style="display:flex;flex-direction:column;gap:80px;">
-      {services.map((s, idx) => (
-        <article 
-          id={s.id} 
-          class="gsap-fade-up"
-          style={`display:grid;grid-template-columns:1fr 1.2fr;gap:64px;align-items:center;padding-bottom:64px;${idx < services.length - 1 ? 'border-bottom:1px solid var(--line);' : ''}`}
-        >
-          <div style={`aspect-ratio:4/3;overflow:hidden;background:rgba(118,89,65,0.1);${idx % 2 === 1 ? 'order:2;' : ''}`}>
-            <img src={s.image} alt={`${s.name} service illustration`} style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
-          </div>
-
-          <div style={idx % 2 === 1 ? 'order:1;' : ''}>
-            <div class="eyebrow" style="color:var(--walnut);">{s.number} / {s.tag}</div>
-            <h2 style="font:400 clamp(36px, 4vw, 56px) 'RoelSerif', serif;margin:12px 0 20px;">
-              {s.name}
-            </h2>
-            <p style="font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:24px;">
-              {s.description}
-            </p>
-
-            <div style="margin-bottom:32px;">
-              <span class="micro" style="color:var(--walnut);display:block;margin-bottom:12px;">What We Coordinate</span>
-              <ul class="specs-list" style="margin:0;">
-                {s.items.map((item) => (
-                  <li>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div style="display:flex;gap:16px;flex-wrap:wrap;">
-              <a href={`/service/${s.id}`} class="btn">
-                View Service Details <span class="arrow">↗</span>
-              </a>
-              <button type="button" class="btn gold" data-enquiry={`Service: ${s.name}`}>
-                Book {s.name} <span class="arrow">↗</span>
-              </button>
-            </div>
+  <section class="service-page-list">
+    <div class="container">
+      {services.map((s) => (
+        <article class="service-feature">
+          <img src={imgSrc(s.image)} alt={`${s.name} service illustration`} loading="lazy" />
+          <div>
+            <span class="eyebrow">{s.number} / {s.tag}</span>
+            <h2>{s.name}</h2>
+            <p>{s.description}</p>
+            <a class="text-link" href={`/service/${s.id}`}>Explore this service <span class="arrow">↗</span></a>
           </div>
         </article>
       ))}
+      <p class="sample-caption">Service descriptions are proposed website copy to be confirmed with the ROEL team before publication.</p>
     </div>
   </section>
 
-  <!-- CTA Band -->
-  <CtaBand />
+  <section class="cta-band">
+    <div class="container cta-row">
+      <div>
+        <span class="eyebrow">The next chapter starts here</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>Tell us what you are creating. We will help you explore the material direction for your home or project.</p>
+        <button class="btn" type="button" data-enquiry="Consultation for a new space">Start a conversation <span class="arrow">↗</span></button>
+      </div>
+    </div>
+  </section>
 </Layout>

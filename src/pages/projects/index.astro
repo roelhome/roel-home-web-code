@@ -1,61 +1,62 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import CtaBand from '../../components/CtaBand.astro';
-import { getProjects } from '../../lib/supabase';
-
-const projects = await getProjects();
+import { projects, imgSrc } from '../../data/originalData.js';
 ---
 
 <Layout 
-  title="Visual Journal & Projects | ROEL Home Solutions Kochi"
-  description="Explore spaces elevated by ROEL: residential villas in Aluva, commercial studios in Kakkanad, and modern facades in Edappally, Kochi."
+  title="Projects Gallery | ROEL Home Solutions"
+  description="Material in context. Explore the character of spaces shaped by warm materials, thoughtful proportions and contemporary details."
 >
-  <!-- Page Header -->
-  <section class="section" style="padding-bottom:48px;">
+  <section class="page-hero">
     <div class="container">
-      <div style="border-bottom:1px solid var(--line);padding-bottom:48px;">
-        <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">A Visual Journal</span>
-        <h1 style="font:400 clamp(48px, 6vw, 92px)/0.95 'RoelSerif', serif;margin-bottom:20px;">
-          Material in <em>context.</em>
-        </h1>
-        <p style="font-size:18px;color:var(--muted);max-width:640px;line-height:1.6;">
-          Explore the character of spaces shaped by warm architectural surfaces, thoughtful proportions and contemporary details across Kerala.
-        </p>
-      </div>
+      <span class="eyebrow">A visual journal</span>
+      <h1>Material in <em>context.</em></h1>
+      <p>Explore the character of spaces shaped by warm materials, thoughtful proportions and contemporary details.</p>
+      <div class="page-count">03</div>
     </div>
   </section>
 
-  <!-- Projects Grid -->
-  <section class="section" style="padding-top:0;">
+  <section class="section">
     <div class="container">
-      <div class="projects-grid gsap-stagger-parent">
-        {projects.map((pj) => (
-          <a class="project-card gsap-stagger-child" href={`/project/${pj.id}`}>
+      <div class="catalogue-note">
+        Portfolio entries below are illustrative concepts for design review. They do not represent verified completed ROEL projects. Add real project photography and approved details during subsequent project phases.
+      </div>
+      <div class="project-grid">
+        {projects.map((p) => (
+          <a class="project-card" href={`/project/${p.id}`}>
             <div class="project-photo">
-              <img src={pj.image} alt={`${pj.name} architectural showcase`} loading="lazy" />
-              <span class="project-pill">{pj.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
+              <img src={imgSrc(p.image)} alt={`${p.name} architectural showcase`} loading="lazy" />
+              <span class="project-pill">{p.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
               <div class="project-overlay">
-                <span>{pj.category}</span>
-                <h3>{pj.name}</h3>
+                <span>{p.category}</span>
+                <h3>{p.name}</h3>
               </div>
             </div>
             <div class="project-location">
-              <span>{pj.location} &nbsp;/&nbsp; {pj.year}</span>
+              <span>{p.location} &nbsp;/&nbsp; {p.year}</span>
               <span>↗</span>
             </div>
           </a>
         ))}
       </div>
+      <div style="margin-top:38px">
+        <button type="button" class="text-link" style="background:none;border-top:none;border-left:none;border-right:none;cursor:pointer" data-enquiry="New custom architectural project enquiry">
+          Enquire about a custom project <span class="arrow">↗</span>
+        </button>
+      </div>
     </div>
   </section>
 
-  <!-- CTA Band -->
-  <CtaBand 
-    eyebrow="Have a project in mind?"
-    title="Let's discuss materials for your"
-    italicWord="upcoming build."
-    description="Send us your floor plans, elevations, or 3D renders. We will help map the ideal surfaces, doors, and partitions for each space."
-    buttonText="Share Project Details"
-    enquiryContext="Project portfolio consultation"
-  />
+  <section class="cta-band">
+    <div class="container cta-row">
+      <div>
+        <span class="eyebrow">The next chapter starts here</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>Tell us what you are creating. We will help you explore the material direction for your home or project.</p>
+        <button class="btn" type="button" data-enquiry="Consultation for a new space">Start a conversation <span class="arrow">↗</span></button>
+      </div>
+    </div>
+  </section>
 </Layout>
