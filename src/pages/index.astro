@@ -1,0 +1,204 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HeroCanvas from '../components/HeroCanvas.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getProducts, getServices, getProjects } from '../lib/supabase';
+
+const products = await getProducts();
+const services = await getServices();
+const projects = await getProjects();
+---
+
+<Layout 
+  title="ROEL Home Solutions | Spaces Elevated | Architectural Materials Kochi"
+  description="ROEL Home Solutions — architectural materials, distinctive doors, wall solutions and decorative accents in Kochi, Kerala. Creating spaces, defining living."
+>
+  <!-- Hero Section -->
+  <section class="hero">
+    <HeroCanvas />
+
+    <div class="hero-grid">
+      <div class="hero-copy gsap-fade-up">
+        <div class="eyebrow" style="color:var(--walnut);">ROEL Home Solutions &nbsp; / &nbsp; Kochi</div>
+        <h1>Spaces<br />worth <em>living in.</em></h1>
+        <p class="hero-desc">
+          Architectural materials, distinctive doors and considered details for places that feel entirely your own.
+        </p>
+        <div>
+          <a class="btn gold" href="/catalogue">
+            Explore products <span class="arrow">↗</span>
+          </a>
+        </div>
+        <div class="hero-meta">
+          <span>Creating spaces. Defining living.</span>
+          <span>•</span>
+          <span>Kochi, Kerala</span>
+        </div>
+      </div>
+
+      <div class="hero-media-wrap gsap-fade-up">
+        <img 
+          src="/images/hero.webp" 
+          alt="ROEL Home Solutions modern architectural interior featuring natural wood fluted panels"
+          width="640"
+          height="800"
+          fetchpriority="high"
+        />
+        <button type="button" class="film-badge" data-play-film="true" aria-label="Play ROEL brand preview film">
+          <span class="play-dot" aria-hidden="true"></span>
+          <span>Play brand preview</span>
+          <span class="arrow">↗</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Brand Philosophy Section -->
+  <section class="section" style="background:rgba(229,191,140,0.12);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+    <div class="container gsap-fade-up" style="max-width:960px;text-align:center;padding:32px 0;">
+      <span class="eyebrow" style="color:var(--walnut);justify-content:center;margin-bottom:20px;">The ROEL Philosophy</span>
+      <h2 style="font:400 clamp(32px, 4vw, 54px)/1.15 'RoelSerif', serif;margin-bottom:24px;">
+        Every space carries a quiet emotion shaped by <em class="italic">surfaces, warmth and light.</em>
+      </h2>
+      <p style="font-size:17px;color:var(--muted);line-height:1.7;max-width:760px;margin:0 auto 32px;">
+        At ROEL, we curate materials designed to elevate residential and commercial environments across Kerala. Through thoughtful proportions, honest textures and disciplined craftsmanship, we help turn architectural drawings into living environments.
+      </p>
+      <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+        <a href="/about" class="btn">Our Story <span class="arrow">↗</span></a>
+        <button type="button" class="btn gold" data-enquiry="Consultation from Homepage">Schedule Consultation <span class="arrow">↗</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products / Catalogue Edit -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head gsap-fade-up">
+        <div>
+          <span class="eyebrow" style="color:var(--walnut);">The ROEL Edit</span>
+          <h2>Our <em>products.</em></h2>
+        </div>
+        <a class="btn" href="/catalogue">
+          View full catalogue <span class="arrow">↗</span>
+        </a>
+      </div>
+
+      <div class="products-grid gsap-stagger-parent">
+        {products.map((p) => (
+          <article class="product-card gsap-stagger-child">
+            <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
+              <img src={p.image} alt={`${p.name} architectural material sample`} loading="lazy" />
+              <span class="on-image-tag">{p.category}</span>
+              <span class="image-arrow">↗</span>
+            </a>
+            <div class="product-info">
+              <div>
+                <div class="micro muted">{p.sku}</div>
+                <h3>
+                  <a href={`/product/${p.id}`}>{p.name}</a>
+                </h3>
+                <p>{p.short}</p>
+              </div>
+              <div class="product-price">{p.price}</div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Practice / Services Section -->
+  <section class="section" style="border-top:1px solid var(--line);">
+    <div class="container">
+      <div class="section-head gsap-fade-up">
+        <div>
+          <span class="eyebrow" style="color:var(--walnut);">Our Practice</span>
+          <h2>Care in <em>every detail.</em></h2>
+        </div>
+        <a class="btn" href="/services">
+          Explore services <span class="arrow">↗</span>
+        </a>
+      </div>
+
+      <div class="gsap-stagger-parent">
+        {services.map((s) => (
+          <a class="service-row gsap-stagger-child" href={`/service/${s.id}`}>
+            <span class="service-index">{s.number}</span>
+            <h3>{s.name}</h3>
+            <p>{s.summary}</p>
+            <span class="round-arrow">↗</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Visual Journal / Projects Showcase -->
+  <section class="section" style="border-top:1px solid var(--line);">
+    <div class="container">
+      <div class="section-head gsap-fade-up">
+        <div>
+          <span class="eyebrow" style="color:var(--walnut);">A Visual Journal</span>
+          <h2>Material in <em>context.</em></h2>
+        </div>
+        <a class="btn" href="/projects">
+          Explore projects <span class="arrow">↗</span>
+        </a>
+      </div>
+
+      <div class="projects-grid gsap-stagger-parent">
+        {projects.map((pj) => (
+          <a class="project-card gsap-stagger-child" href={`/project/${pj.id}`}>
+            <div class="project-photo">
+              <img src={pj.image} alt={`${pj.name} architectural showcase`} loading="lazy" />
+              <span class="project-pill">{pj.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
+              <div class="project-overlay">
+                <span>{pj.category}</span>
+                <h3>{pj.name}</h3>
+              </div>
+            </div>
+            <div class="project-location">
+              <span>{pj.location} &nbsp;/&nbsp; {pj.year}</span>
+              <span>↗</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Material Consultation Highlight in Kochi -->
+  <section class="section" style="background:var(--ink);color:var(--ivory);">
+    <div class="container" style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+      <div class="gsap-fade-up">
+        <span class="eyebrow" style="color:var(--champagne);">Material Consultation / Kochi</span>
+        <h2 style="font:400 clamp(38px,4.5vw,64px)/1.05 'RoelSerif', serif;margin:16px 0 24px;">
+          Selecting materials<br /><em class="italic" style="color:var(--champagne);">with confidence.</em>
+        </h2>
+        <p style="color:rgba(240,226,206,.75);font-size:16px;line-height:1.7;margin-bottom:32px;">
+          Whether you are building a new residence in Kochi or finalizing architectural details for a luxury commercial space, our team assists architects, builders and homeowners in navigating profiles, textures, finishes, and custom sizes.
+        </p>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+          <button type="button" class="btn gold" data-enquiry="Consultation in Kochi">
+            Book Consultation <span class="arrow">↗</span>
+          </button>
+          <a href="tel:+918111899991" class="btn inverse">
+            Call +91 81118 99991 <span class="arrow">↗</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="gsap-fade-up" style="aspect-ratio:4/3;overflow:hidden;border:1px solid rgba(229,191,140,0.25);">
+        <img 
+          src="/images/living.webp" 
+          alt="ROEL Home Solutions consultation and materials studio" 
+          style="width:100%;height:100%;object-fit:cover;"
+          loading="lazy"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Band -->
+  <CtaBand />
+</Layout>

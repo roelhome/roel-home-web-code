@@ -1,0 +1,23 @@
+# Build output
+dist/
+.astro/
+.wrangler/
+
+# Dependencies
+node_modules/
+
+# Environment files (never commit secrets)
+.env
+.env.production
+.env.local
+*.local
+
+# System & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Scratch & extraction temporaries
+extracted_assets/
+scratch_*

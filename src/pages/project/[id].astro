@@ -1,0 +1,144 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { getProjects } from '../../lib/supabase';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({
+    params: { id: project.id },
+    props: { project, allProjects: projects },
+  }));
+}
+
+const { project, allProjects } = Astro.props;
+
+const otherProjects = allProjects.filter((p) => p.id !== project.id);
+
+const waText = encodeURIComponent(`Hello ROEL, I saw your project ${project.name} (${project.location}) and would like to explore similar architectural materials for my space.`);
+const waUrl = `https://wa.me/918111899991?text=${waText}`;
+---
+
+<Layout 
+  title={`${project.name} | ROEL Projects Kochi`}
+  description={project.summary || project.story}
+  image={project.image}
+>
+  <!-- Breadcrumbs -->
+  <section style="padding:32px 0 16px;">
+    <div class="container">
+      <nav style="display:flex;gap:12px;font-size:11px;text-transform:uppercase;letter-spacing:0.2em;color:var(--muted);" aria-label="Breadcrumb">
+        <a href="/" style="color:var(--ink);">Home</a>
+        <span>/</span>
+        <a href="/projects" style="color:var(--ink);">Projects</a>
+        <span>/</span>
+        <span style="color:var(--walnut);">{project.name}</span>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Project Header -->
+  <section class="section" style="padding-top:20px;padding-bottom:48px;">
+    <div class="container">
+      <div style="border-bottom:1px solid var(--line);padding-bottom:36px;">
+        <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">
+          {project.isDemo ? 'Illustrative Portfolio Concept' : 'Project Portfolio Entry'} / {project.category}
+        </span>
+        <h1 style="font:400 clamp(44px, 5.5vw, 84px)/0.95 'RoelSerif', serif;margin-bottom:28px;">
+          {project.name}
+        </h1>
+
+        <div style="display:flex;gap:48px;flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:0.18em;">
+          <div>
+            <span class="muted" style="display:block;margin-bottom:4px;font-size:10px;">Location</span>
+            <strong>{project.location}</strong>
+          </div>
+          <div>
+            <span class="muted" style="display:block;margin-bottom:4px;font-size:10px;">Classification</span>
+            <strong>{project.category}</strong>
+          </div>
+          <div>
+            <span class="muted" style="display:block;margin-bottom:4px;font-size:10px;">Year</span>
+            <strong>{project.year}</strong>
+          </div>
+          <div>
+            <span class="muted" style="display:block;margin-bottom:4px;font-size:10px;">Scope</span>
+            <strong>Architectural Surfaces &amp; Detailing</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Project Image & Story -->
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div style="aspect-ratio:16/9;max-height:700px;overflow:hidden;background:rgba(118,89,65,0.1);margin-bottom:64px;border:1px solid var(--line);" class="gsap-fade-up">
+        <img src={project.image} alt={project.name} style="width:100%;height:100%;object-fit:cover;" />
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;" class="gsap-fade-up">
+        <div>
+          <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">Design Intent</span>
+          <h2 style="font:400 clamp(32px, 3.5vw, 48px) 'RoelSerif', serif;margin-bottom:24px;">
+            Harmonizing natural textures with <em class="italic">modern architecture.</em>
+          </h2>
+          <p style="font-size:17px;color:var(--muted);line-height:1.7;">
+            {project.summary}
+          </p>
+        </div>
+
+        <div>
+          <span class="micro" style="color:var(--walnut);display:block;margin-bottom:12px;">Material Narrative</span>
+          <p style="font-size:15px;line-height:1.8;color:var(--ink);margin-bottom:32px;">
+            {project.story}
+          </p>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <a class="btn gold" href={waUrl} target="_blank" rel="noopener noreferrer">
+              Enquire Similar Scope <span class="arrow">↗</span>
+            </a>
+            <button class="btn" type="button" data-enquiry={`Project: ${project.name} (${project.location})`}>
+              Consult Our Team <span class="arrow">↗</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Other Projects -->
+  <section class="section" style="border-top:1px solid var(--line);background:rgba(229,191,140,0.08);">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow" style="color:var(--walnut);">More from the journal</span>
+          <h2>Explore other <em>spaces.</em></h2>
+        </div>
+        <a class="btn" href="/projects">All Projects <span class="arrow">↗</span></a>
+      </div>
+
+      <div class="projects-grid">
+        {otherProjects.map((pj) => (
+          <a class="project-card" href={`/project/${pj.id}`}>
+            <div class="project-photo">
+              <img src={pj.image} alt={pj.name} loading="lazy" />
+              <span class="project-pill">{pj.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
+              <div class="project-overlay">
+                <span>{pj.category}</span>
+                <h3>{pj.name}</h3>
+              </div>
+            </div>
+            <div class="project-location">
+              <span>{pj.location} &nbsp;/&nbsp; {pj.year}</span>
+              <span>↗</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Band -->
+  <CtaBand />
+</Layout>

@@ -1,0 +1,34 @@
+---
+interface Props {
+  eyebrow?: string;
+  title?: string;
+  italicWord?: string;
+  description?: string;
+  buttonText?: string;
+  enquiryContext?: string;
+}
+
+const {
+  eyebrow = "The next chapter starts here",
+  title = "Let's shape your",
+  italicWord = "next space.",
+  description = "Tell us what you are creating. We will help you explore the material direction, sizes and textures for your home or commercial project.",
+  buttonText = "Start a conversation",
+  enquiryContext = "Consultation for a new space"
+} = Astro.props;
+---
+
+<section class="cta-band">
+  <div class="container cta-row">
+    <div>
+      <span class="eyebrow" style="color:var(--champagne);">{eyebrow}</span>
+      <h2>{title}<br /><em class="italic">{italicWord}</em></h2>
+    </div>
+    <div>
+      <p>{description}</p>
+      <button class="btn gold" type="button" data-enquiry={enquiryContext}>
+        {buttonText} <span class="arrow">↗</span>
+      </button>
+    </div>
+  </div>
+</section>

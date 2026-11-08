@@ -1,0 +1,11 @@
+---
+interface Props {
+  text?: string;
+}
+
+const { text = "ROEL HOME SOLUTIONS / ARCHITECTURAL MATERIALS & SPACES" } = Astro.props;
+---
+
+<div class="announcement">
+  {text}
+</div>

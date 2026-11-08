@@ -1,0 +1,118 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Announcement from '../components/Announcement.astro';
+import SmoothScroll from '../components/SmoothScroll.astro';
+import EnquiryModal from '../components/EnquiryModal';
+import SearchModal from '../components/SearchModal';
+import BrandFilmModal from '../components/BrandFilmModal';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+}
+
+const {
+  title = "ROEL Home Solutions | Spaces Elevated | Architectural Materials Kochi",
+  description = "ROEL Home Solutions — architectural materials, distinctive doors, wall solutions and decorative accents in Kochi, Kerala. Creating spaces, defining living.",
+  image = "/images/hero.webp",
+  article = false
+} = Astro.props;
+
+const siteUrl = "https://roelhomes.com";
+const canonicalURL = new URL(Astro.url.pathname, siteUrl).toString();
+const ogImageURL = new URL(image, siteUrl).toString();
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HomeAndConstructionBusiness",
+  "name": "ROEL Home Solutions",
+  "url": siteUrl,
+  "logo": `${siteUrl}/images/roel-logo-header.png`,
+  "image": ogImageURL,
+  "description": description,
+  "telephone": "+918111899991",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Kochi",
+    "addressRegion": "Kerala",
+    "addressCountry": "IN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "9.9312",
+    "longitude": "76.2673"
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      "opens": "09:30",
+      "closes": "18:30"
+    }
+  ],
+  "priceRange": "₹₹₹"
+};
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#19120C" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/png" href="/images/roel-logo.png" />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- SEO Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={article ? "article" : "website"} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:site_name" content="ROEL Home Solutions" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={ogImageURL} />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Preload Fonts -->
+    <link rel="preload" href="/fonts/RoelSerif-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/RoelSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <div id="top"></div>
+    <Announcement />
+    <Header currentPath={Astro.url.pathname} />
+
+    <main>
+      <slot />
+    </main>
+
+    <Footer />
+
+    <!-- Client Interactive Modals (React Islands) -->
+    <EnquiryModal client:idle />
+    <SearchModal client:idle />
+    <BrandFilmModal client:idle />
+
+    <!-- Smooth Scroll & GSAP Engine -->
+    <SmoothScroll />
+  </body>
+</html>

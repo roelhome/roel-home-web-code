@@ -1,0 +1,88 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ContactForm from '../components/ContactForm';
+---
+
+<Layout 
+  title="Contact Us & Kochi Studio | ROEL Home Solutions"
+  description="Connect with ROEL Home Solutions in Kochi, Kerala. Call +91 81118 99991 or submit your architectural drawings and material requirements online."
+>
+  <!-- Page Header -->
+  <section class="section" style="padding-bottom:48px;">
+    <div class="container">
+      <div style="border-bottom:1px solid var(--line);padding-bottom:48px;">
+        <span class="eyebrow" style="color:var(--walnut);margin-bottom:16px;">Connect with us</span>
+        <h1 style="font:400 clamp(48px, 6vw, 92px)/0.95 'RoelSerif', serif;margin-bottom:20px;">
+          Let's talk <em>materials.</em>
+        </h1>
+        <p style="font-size:18px;color:var(--muted);max-width:640px;line-height:1.6;">
+          Whether you are creating a private residence, working on a commercial build, or specifying architectural surfaces, we would love to collaborate.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Grid -->
+  <section class="section" style="padding-top:0;">
+    <div class="container" style="display:grid;grid-template-columns:1fr 1.3fr;gap:80px;align-items:start;">
+      <!-- Direct Contact Details -->
+      <div class="gsap-fade-up">
+        <span class="eyebrow" style="color:var(--walnut);">ROEL / Kochi, Kerala</span>
+        <h2 style="font:400 clamp(36px, 4vw, 56px)/1.05 'RoelSerif', serif;margin:16px 0 24px;">
+          Start with a<br /><em class="italic">conversation.</em>
+        </h2>
+        <p style="font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:36px;">
+          Share your ideas, dimensions or reference imagery. Our Kochi team can help you take the next step toward the right material directions.
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:24px;border-top:1px solid var(--line);padding-top:32px;">
+          <div>
+            <span class="micro" style="color:var(--walnut);">Direct Phone Line</span>
+            <div style="font:400 24px 'RoelSerif', serif;margin-top:4px;">
+              <a href="tel:+918111899991" style="color:var(--ink);">+91 81118 99991</a>
+            </div>
+          </div>
+
+          <div>
+            <span class="micro" style="color:var(--walnut);">Email Desk</span>
+            <div style="font:400 20px 'RoelSerif', serif;margin-top:4px;">
+              <a href="mailto:info@roelhome.com" style="color:var(--ink);">info@roelhome.com</a>
+            </div>
+          </div>
+
+          <div>
+            <span class="micro" style="color:var(--walnut);">Studio Location</span>
+            <p style="font-size:15px;color:var(--ink);margin-top:4px;">
+              Kochi, Kerala, India
+            </p>
+          </div>
+
+          <div>
+            <span class="micro" style="color:var(--walnut);">Studio Operating Hours</span>
+            <p style="font-size:14px;color:var(--muted);margin-top:4px;">
+              Monday through Saturday: 9:30 AM to 6:30 PM IST
+            </p>
+          </div>
+        </div>
+
+        <div style="margin-top:36px;">
+          <a 
+            class="btn gold" 
+            href="https://wa.me/918111899991?text=Hello%20ROEL,%20I%20would%20like%20to%20discuss%20an%20architectural%20material%20enquiry." 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            Chat Directly on WhatsApp <span class="arrow">↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Interactive Contact Form -->
+      <div class="gsap-fade-up" style="background:#ffffff;padding:48px 40px;border:1px solid var(--line);border-radius:2px;box-shadow:0 8px 30px rgba(118,89,65,0.06);">
+        <span class="eyebrow" style="color:var(--walnut);margin-bottom:8px;">Project Consultation Form</span>
+        <h3 style="font:400 32px 'RoelSerif', serif;margin-bottom:24px;">Send a Message</h3>
+        <ContactForm client:load />
+      </div>
+    </div>
+  </section>
+</Layout>

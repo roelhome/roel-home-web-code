@@ -1,0 +1,95 @@
+---
+// Smooth scroll integration with Lenis and GSAP ScrollTrigger
+---
+
+<script>
+  import Lenis from 'lenis';
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Initialize Lenis smooth scroll
+  const lenis = new Lenis({
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    orientation: 'vertical',
+    gestureOrientation: 'vertical',
+    smoothWheel: true,
+    touchMultiplier: 2,
+  });
+
+  // Connect Lenis to GSAP ScrollTrigger
+  lenis.on('scroll', ScrollTrigger.update);
+
+  gsap.ticker.add((time) => {
+    lenis.raf(time * 1000);
+  });
+
+  gsap.ticker.lagSmoothing(0);
+
+  // Expose lenis globally for modal stops
+  (window as any).roelLenis = lenis;
+
+  // Initialize GSAP scroll animations across page
+  function initAnimations() {
+    // Reveal text in sections
+    gsap.utils.toArray<HTMLElement>('.gsap-fade-up').forEach((el) => {
+      gsap.fromTo(
+        el,
+        { opacity: 0, y: 35 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
+
+    // Stagger cards
+    gsap.utils.toArray<HTMLElement>('.gsap-stagger-parent').forEach((parent) => {
+      const children = parent.querySelectorAll('.gsap-stagger-child');
+      if (children.length > 0) {
+        gsap.fromTo(
+          children,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.9,
+            stagger: 0.15,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: parent,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      }
+    });
+
+    // Header subtle shadow and blur morph
+    const header = document.querySelector('.site-header');
+    if (header) {
+      ScrollTrigger.create({
+        start: 'top -50',
+        end: 99999,
+        toggleClass: { className: 'scrolled', targets: header },
+      });
+    }
+  }
+
+  // Run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAnimations);
+  } else {
+    initAnimations();
+  }
+</script>
