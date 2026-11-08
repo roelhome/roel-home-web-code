@@ -50,8 +50,18 @@ export default function BrandFilmModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}>
-      <div className="modal-dialog video-dialog" role="dialog" aria-modal="true" aria-label="Brand Film Preview">
+    <div 
+      className="modal-overlay open" 
+      data-lenis-prevent="true"
+      onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+    >
+      <div 
+        className="modal-dialog video-dialog" 
+        data-lenis-prevent="true"
+        role="dialog" 
+        aria-modal="true" 
+        aria-label="Brand Film Preview"
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <p style={{ color: 'var(--champagne)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>
             ROEL / Materials in motion &nbsp;·&nbsp; Design preview

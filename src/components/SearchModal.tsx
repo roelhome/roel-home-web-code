@@ -43,9 +43,15 @@ export default function SearchModal() {
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add('no-scroll');
+      if ((window as any).roelLenis) {
+        (window as any).roelLenis.stop();
+      }
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       document.body.classList.remove('no-scroll');
+      if ((window as any).roelLenis) {
+        (window as any).roelLenis.start();
+      }
       setQuery('');
     }
   }, [isOpen]);
@@ -67,8 +73,16 @@ export default function SearchModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}>
-      <div className="modal-dialog" style={{ width: 'min(680px, 95%)', maxHeight: '80vh', padding: '36px' }}>
+    <div 
+      className="modal-overlay open" 
+      data-lenis-prevent="true"
+      onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+    >
+      <div 
+        className="modal-dialog" 
+        data-lenis-prevent="true"
+        style={{ width: 'min(680px, 95%)', maxHeight: 'calc(100vh - 64px)', padding: '36px 32px' }}
+      >
         <button 
           className="modal-close" 
           type="button" 
@@ -102,7 +116,7 @@ export default function SearchModal() {
               </p>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '45vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '45vh', overflowY: 'auto' }} data-lenis-prevent="true">
               {matchedProducts.map(p => (
                 <a 
                   key={p.id} 

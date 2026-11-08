@@ -110,8 +110,18 @@ export default function EnquiryModal() {
   const waUrl = `https://wa.me/918111899991?text=${waText}`;
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}>
-      <div className="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-enquiry-title">
+    <div 
+      className="modal-overlay open" 
+      data-lenis-prevent="true"
+      onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+    >
+      <div 
+        className="modal-dialog" 
+        data-lenis-prevent="true"
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="modal-enquiry-title"
+      >
         <button 
           className="modal-close" 
           type="button" 
@@ -123,10 +133,10 @@ export default function EnquiryModal() {
 
         <div style={{ marginBottom: '24px' }}>
           <span className="eyebrow" style={{ color: 'var(--walnut)' }}>Quick Enquiry</span>
-          <h2 id="modal-enquiry-title" style={{ font: "400 clamp(32px, 4vw, 42px) 'RoelSerif', serif", margin: '8px 0' }}>
+          <h2 id="modal-enquiry-title" style={{ font: "400 clamp(28px, 4vw, 38px) 'RoelSerif', serif", margin: '8px 0' }}>
             Tell us about <em className="italic">your space.</em>
           </h2>
-          <p className="muted" style={{ fontSize: '14px' }}>
+          <p className="muted" style={{ fontSize: '13px', lineHeight: 1.5 }}>
             {subject !== 'General project enquiry' ? `Referencing: ${subject}` : 'Share your ideas or requirements. Our Kochi team is here to assist.'}
           </p>
         </div>
@@ -164,7 +174,7 @@ export default function EnquiryModal() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
               <div className="field">
                 <label htmlFor="modal-phone">Phone Number *</label>
                 <input 
@@ -209,7 +219,7 @@ export default function EnquiryModal() {
               <label htmlFor="modal-message">Your Message or Requirements *</label>
               <textarea 
                 id="modal-message" 
-                rows={4} 
+                rows={3} 
                 required 
                 placeholder="Provide rough dimensions, material interests, or location..." 
                 value={message} 
@@ -223,12 +233,12 @@ export default function EnquiryModal() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '16px', marginTop: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
               <button 
                 type="submit" 
                 className="btn gold" 
                 disabled={status === 'submitting'}
-                style={{ flex: '1', minWidth: '160px' }}
+                style={{ flex: '1', minWidth: '150px' }}
               >
                 {status === 'submitting' ? 'Submitting...' : 'Send Enquiry'} <span className="arrow">↗</span>
               </button>
@@ -238,13 +248,13 @@ export default function EnquiryModal() {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="btn" 
-                style={{ flex: '1', minWidth: '160px', borderColor: 'var(--walnut)' }}
+                style={{ flex: '1', minWidth: '150px', borderColor: 'var(--walnut)' }}
               >
-                WhatsApp Instead <span className="arrow">↗</span>
+                WhatsApp <span className="arrow">↗</span>
               </a>
             </div>
 
-            <p className="micro muted" style={{ textAlign: 'center', marginTop: '12px' }}>
+            <p className="micro muted" style={{ textAlign: 'center', marginTop: '10px' }}>
               Prefer to call directly? <a href="tel:+918111899991" style={{ textDecoration: 'underline', color: 'var(--ink)' }}>+91 81118 99991</a>
             </p>
           </form>

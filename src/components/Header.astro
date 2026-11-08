@@ -17,7 +17,7 @@ const navItems = [
 <header class="site-header">
   <div class="container nav-shell">
     <a class="brand-link" href="/" aria-label="ROEL Home Solutions — Home">
-      <img src="/images/roel-logo-header.png" alt="ROEL Home Solutions" width="180" height="38" />
+      <img src="/images/roel-logo-dark.png" alt="ROEL Home Solutions" width="170" height="40" />
     </a>
 
     <nav class="nav-links" aria-label="Main Navigation">
@@ -57,10 +57,12 @@ const navItems = [
   </div>
 
   <!-- Mobile Drawer Menu -->
-  <div class="mobile-drawer" id="mobile-drawer">
-    <div class="drawer-inner">
+  <div class="mobile-drawer" id="mobile-drawer" data-lenis-prevent="true">
+    <div class="drawer-inner" data-lenis-prevent="true">
       <div class="drawer-header">
-        <span class="eyebrow">Menu</span>
+        <a class="brand-link" href="/" aria-label="ROEL Home Solutions" style="width:130px;">
+          <img src="/images/roel-logo-dark.png" alt="ROEL Home Solutions" width="130" height="32" />
+        </a>
         <button type="button" class="modal-close" id="close-mobile-drawer" aria-label="Close menu">×</button>
       </div>
       <nav class="drawer-links">
@@ -114,6 +116,8 @@ const navItems = [
     transform: translateX(100%);
     transition: transform 0.35s var(--ease);
     border-left: 1px solid var(--line);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .mobile-drawer.open .drawer-inner {
@@ -161,12 +165,18 @@ const navItems = [
     drawer?.classList.add('open');
     document.body.classList.add('no-scroll');
     menuBtn?.setAttribute('aria-expanded', 'true');
+    if ((window as any).roelLenis) {
+      (window as any).roelLenis.stop();
+    }
   }
 
   function closeDrawer() {
     drawer?.classList.remove('open');
     document.body.classList.remove('no-scroll');
     menuBtn?.setAttribute('aria-expanded', 'false');
+    if ((window as any).roelLenis) {
+      (window as any).roelLenis.start();
+    }
   }
 
   menuBtn?.addEventListener('click', openDrawer);
