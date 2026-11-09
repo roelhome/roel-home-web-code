@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const resendApiKey = import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY;
+const resendApiKey = (import.meta as any).env?.RESEND_API_KEY || (globalThis as any).process?.env?.RESEND_API_KEY;
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -19,7 +19,7 @@ export async function sendEnquiryEmail(params: SendEnquiryParams) {
     return { success: true, mocked: true };
   }
 
-  const notificationEmail = import.meta.env.NOTIFICATION_EMAIL || process.env.NOTIFICATION_EMAIL || 'info@roelhome.com';
+  const notificationEmail = (import.meta as any).env?.NOTIFICATION_EMAIL || (globalThis as any).process?.env?.NOTIFICATION_EMAIL || 'info@roelhome.com';
 
   try {
     const data = await resend.emails.send({

@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const body = await request.json();
-    const { name, phone, email, projectType, message, source } = body;
+    const { name, phone, email, location, projectType, message, source } = body;
 
     // Validation
     if (!name || typeof name !== 'string' || !name.trim()) {
@@ -33,18 +33,15 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    if (!message || typeof message !== 'string' || !message.trim()) {
-      return new Response(JSON.stringify({ success: false, error: 'Message cannot be empty' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
     const cleanName = name.trim().slice(0, 100);
     const cleanPhone = phone.trim().slice(0, 25);
+    const cleanLocation = location ? String(location).trim().slice(0, 100) : null;
     const cleanEmail = email ? String(email).trim().slice(0, 100) : null;
     const cleanProjectType = projectType ? String(projectType).trim().slice(0, 50) : 'General';
-    const cleanMessage = message.trim().slice(0, 3000);
+    const rawMessage = (message && typeof message === 'string' && message.trim()) 
+      ? message.trim().slice(0, 3000) 
+      : `Client consultation enquiry for ${cleanProjectType}`;
+    const cleanMessage = cleanLocation ? `[Location: ${cleanLocation}]\n\n${rawMessage}` : rawMessage;
     const cleanSource = source ? String(source).trim().slice(0, 80) : 'Website Form';
 
     // 1. Insert into Supabase enquiries table (if available)

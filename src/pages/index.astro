@@ -1,43 +1,241 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { products, services, projects, imgSrc } from '../data/originalData.js';
+
+const heroSlides = [
+  {
+    id: 'doors',
+    pillar: 'DOORS',
+    image: '/images/hero-doors.jpg',
+    imageMobile: '/images/hero-doors-mobile.jpg',
+    alt: 'Roel Architectural modern living interior with illuminated walnut door and wood slat panels',
+    eyebrow: [
+      { text: 'DOORS', active: true },
+      { text: 'WALL SOLUTIONS', active: false },
+      { text: 'SURFACES', active: false },
+    ],
+    title: 'Architectural<br />Solutions for<br />Modern Living',
+    desc: 'Premium distinctive doors, engineered frames and bespoke entrance systems that bring timeless design, security and lasting craftsmanship to your space.',
+    ctaText: 'EXPLORE COLLECTIONS',
+    ctaLink: '/catalogue',
+  },
+  {
+    id: 'walls',
+    pillar: 'WALL SOLUTIONS',
+    image: '/images/hero-walls.jpg',
+    imageMobile: '/images/hero-walls-mobile.jpg',
+    alt: 'Luxury architectural wall systems, walnut fluted wood slats, and warm acoustic paneling',
+    eyebrow: [
+      { text: 'DOORS', active: false },
+      { text: 'WALL SOLUTIONS', active: true },
+      { text: 'SURFACES', active: false },
+    ],
+    title: 'Bespoke Paneling<br />& Architectural<br />Wall Systems',
+    desc: 'Acoustic fluted slats, luxury wood claddings and refined feature wall systems designed to add depth, warmth and textural drama to contemporary interiors.',
+    ctaText: 'EXPLORE WALL SYSTEMS',
+    ctaLink: '/catalogue',
+  },
+  {
+    id: 'surfaces',
+    pillar: 'SURFACES',
+    image: '/images/hero-surfaces.jpg',
+    imageMobile: '/images/hero-surfaces-mobile.jpg',
+    alt: 'Distinctive bookmatched marble surfaces, fine wood veneers and luxury textures',
+    eyebrow: [
+      { text: 'DOORS', active: false },
+      { text: 'WALL SOLUTIONS', active: false },
+      { text: 'SURFACES', active: true },
+    ],
+    title: 'Curated Textures<br />& Distinctive<br />Surface Materials',
+    desc: 'Bookmatched natural stone, fine architectural veneers and high-performance tactile surface materials curated for refined living spaces.',
+    ctaText: 'EXPLORE SURFACES',
+    ctaLink: '/catalogue',
+  }
+];
 ---
 
 <Layout 
   title="ROEL Home Solutions | Spaces Elevated | Architectural Materials Kochi"
   description="ROEL Home Solutions — architectural materials, distinctive doors, wall solutions and decorative accents in Kochi, Kerala. Creating spaces, defining living."
 >
-  <!-- Hero Section (Exact 1:1 match to uploaded HTML) -->
-  <section class="hero">
-    <div class="hero-grid">
-      <div class="hero-copy gsap-fade-up">
-        <div class="eyebrow">ROEL Home Solutions &nbsp; / &nbsp; Kochi</div>
-        <h1>Spaces<br />worth <em>living in.</em></h1>
-        <p class="hero-desc">Architectural materials, distinctive doors and considered details for places that feel entirely your own.</p>
-        <div>
-          <a class="btn gold" href="/catalogue">Explore products <span class="arrow">↗</span></a>
+  <!-- Unified Landscape Hero Slider Section -->
+  <section class="hero hero-landscape" id="hero-slider" aria-label="Architectural Collections Slider">
+    <!-- Slide Backgrounds -->
+    <div class="hero-bg-stack">
+      {heroSlides.map((slide, i) => (
+        <div class={`hero-slide-bg ${i === 0 ? 'active' : ''}`} data-bg-index={i}>
+          <picture>
+            <source media="(max-width: 768px)" srcset={slide.imageMobile} />
+            <img 
+              src={slide.image} 
+              alt={slide.alt}
+              width="1920"
+              height="1080"
+              fetchpriority={i === 0 ? "high" : "low"}
+              loading={i === 0 ? "eager" : "lazy"}
+            />
+          </picture>
         </div>
-        <div class="hero-meta">
-          <span>Creating spaces. Defining living.</span>
-          <span>01 / 03</span>
-        </div>
+      ))}
+      <div class="hero-overlay" aria-hidden="true"></div>
+    </div>
+
+    <div class="container hero-container">
+      <!-- Slide Content Panes -->
+      <div class="hero-content-stack gsap-fade-up">
+        {heroSlides.map((slide, i) => (
+          <div class={`hero-slide-content ${i === 0 ? 'active' : ''}`} data-content-index={i}>
+            <div class="hero-eyebrow">
+              {slide.eyebrow.map((item, idx) => (
+                <>
+                  <span class={item.active ? 'active-pillar' : ''}>{item.text}</span>
+                  {idx < slide.eyebrow.length - 1 && <span class="sep">|</span>}
+                </>
+              ))}
+            </div>
+            <h1 class="hero-title" set:html={slide.title} />
+            <p class="hero-desc">{slide.desc}</p>
+            <div class="hero-cta-wrap">
+              <a class="btn hero-btn" href={slide.ctaLink}>
+                <span>{slide.ctaText}</span>
+                <span class="arrow">&rarr;</span>
+              </a>
+            </div>
+          </div>
+        ))}
       </div>
-      <div class="hero-visual">
-        <img 
-          src="/images/hero.webp" 
-          alt="Warm contemporary interior with wood slat feature wall, potted plant and premium wooden door"
-          width="800"
-          height="800"
-          fetchpriority="high"
-        />
-        <div class="hero-side-text">SURFACES / DOORS / DETAILS</div>
-        <div class="hero-visual-label">
-          <span>DESIGNED FOR THE WAY WE LIVE</span>
-          <span class="hero-number">R.</span>
+
+      <!-- Footer Bar: Pagination & Arrows & Brand Signature -->
+      <div class="hero-footer-bar">
+        <div class="hero-pagination" aria-label="Hero slider pagination">
+          {heroSlides.map((_, i) => (
+            <button 
+              type="button" 
+              class={`page-num ${i === 0 ? 'active' : ''}`} 
+              data-slide={i} 
+              aria-label={`Slide ${String(i + 1).padStart(2, '0')}`}
+            >
+              <span>{String(i + 1).padStart(2, '0')}</span>
+              <span class="page-line"></span>
+            </button>
+          ))}
+        </div>
+
+        <div class="hero-footer-right">
+          <div class="hero-visual-label">
+            <span class="hero-tagline">DESIGNED FOR THE WAY WE LIVE</span>
+            <span class="hero-number">R.</span>
+          </div>
+          <div class="hero-arrows">
+            <button type="button" class="hero-arrow-btn prev-arrow" aria-label="Previous slide">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+            <button type="button" class="hero-arrow-btn next-arrow" aria-label="Next slide">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </section>
+
+  <script>
+    const slider = document.getElementById('hero-slider');
+    const bgSlides = document.querySelectorAll<HTMLElement>('.hero-slide-bg');
+    const contentSlides = document.querySelectorAll<HTMLElement>('.hero-slide-content');
+    const pageItems = document.querySelectorAll<HTMLButtonElement>('.hero-pagination .page-num');
+    const prevBtn = document.querySelector<HTMLButtonElement>('.hero-arrow-btn.prev-arrow');
+    const nextBtn = document.querySelector<HTMLButtonElement>('.hero-arrow-btn.next-arrow');
+
+    let activeIdx = 0;
+    const totalSlides = bgSlides.length;
+    let autoPlayTimer: any = null;
+
+    function goToSlide(index: number) {
+      if (!totalSlides) return;
+      activeIdx = (index + totalSlides) % totalSlides;
+
+      // Update background slides with crossfade
+      bgSlides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === activeIdx);
+      });
+
+      // Update content slides with fade and subtle motion
+      contentSlides.forEach((content, i) => {
+        content.classList.toggle('active', i === activeIdx);
+      });
+
+      // Update pagination indicators
+      pageItems.forEach((btn, i) => {
+        btn.classList.toggle('active', i === activeIdx);
+      });
+    }
+
+    function startAutoPlay() {
+      stopAutoPlay();
+      autoPlayTimer = setInterval(() => {
+        goToSlide(activeIdx + 1);
+      }, 7000);
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+    }
+
+    pageItems.forEach((btn, i) => {
+      btn.addEventListener('click', () => {
+        goToSlide(i);
+        startAutoPlay();
+      });
+    });
+
+    prevBtn?.addEventListener('click', () => {
+      goToSlide(activeIdx - 1);
+      startAutoPlay();
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      goToSlide(activeIdx + 1);
+      startAutoPlay();
+    });
+
+    // Touch swipe handling for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    slider?.addEventListener('touchstart', (e: TouchEvent) => {
+      touchStartX = e.changedTouches[0].screenX;
+      stopAutoPlay();
+    }, { passive: true });
+
+    slider?.addEventListener('touchend', (e: TouchEvent) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchEndX - touchStartX;
+      if (Math.abs(diff) > 45) {
+        if (diff < 0) {
+          goToSlide(activeIdx + 1);
+        } else {
+          goToSlide(activeIdx - 1);
+        }
+      }
+      startAutoPlay();
+    }, { passive: true });
+
+    slider?.addEventListener('mouseenter', stopAutoPlay);
+    slider?.addEventListener('mouseleave', startAutoPlay);
+
+    // Initial run
+    startAutoPlay();
+  </script>
 
   <!-- Hero Bottom Features -->
   <div class="hero-bottom">
