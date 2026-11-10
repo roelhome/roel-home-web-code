@@ -156,31 +156,114 @@ const heroSlides = [
     let activeIdx = 0;
     const totalSlides = bgSlides.length;
     let autoPlayTimer: any = null;
+    let isAnimating = false;
+    const DURATION = 800; // ms
+    const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'; // Luxury smooth deceleration
 
-    function goToSlide(index: number) {
-      if (!totalSlides) return;
-      activeIdx = (index + totalSlides) % totalSlides;
+    function goToSlide(targetIdx: number, explicitDirection?: 'next' | 'prev') {
+      if (!totalSlides || targetIdx === activeIdx || isAnimating) return;
+      isAnimating = true;
 
-      // Update background slides with crossfade
-      bgSlides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === activeIdx);
-      });
+      // Determine movement direction: 'next' (slide right-to-left) or 'prev' (slide left-to-right)
+      let dir = explicitDirection;
+      if (!dir) {
+        if (activeIdx === totalSlides - 1 && targetIdx === 0) {
+          dir = 'next';
+        } else if (activeIdx === 0 && targetIdx === totalSlides - 1) {
+          dir = 'prev';
+        } else {
+          dir = targetIdx > activeIdx ? 'next' : 'prev';
+        }
+      }
 
-      // Update content slides with fade and subtle motion
-      contentSlides.forEach((content, i) => {
-        content.classList.toggle('active', i === activeIdx);
-      });
+      const currentBg = bgSlides[activeIdx];
+      const targetBg = bgSlides[targetIdx];
+      const currentContent = contentSlides[activeIdx];
+      const targetContent = contentSlides[targetIdx];
 
-      // Update pagination indicators
+      // Reset any pending transitions & set initial incoming positions
+      targetBg.style.transition = 'none';
+      targetContent.style.transition = 'none';
+
+      if (dir === 'next') {
+        targetBg.style.transform = 'translate3d(100%, 0, 0)';
+        targetContent.style.transform = 'translate3d(70px, 0, 0)';
+      } else {
+        targetBg.style.transform = 'translate3d(-100%, 0, 0)';
+        targetContent.style.transform = 'translate3d(-70px, 0, 0)';
+      }
+      targetContent.style.opacity = '0';
+      targetBg.classList.add('animating');
+      targetContent.classList.add('animating');
+
+      // Force synchronous reflow so browser registers initial position
+      void targetBg.offsetWidth;
+      void targetContent.offsetWidth;
+
+      // Set smooth transition curve
+      currentBg.style.transition = `transform ${DURATION}ms ${EASING}`;
+      targetBg.style.transition = `transform ${DURATION}ms ${EASING}`;
+
+      currentContent.style.transition = `transform ${DURATION * 0.9}ms ${EASING}, opacity ${DURATION * 0.65}ms ease`;
+      targetContent.style.transition = `transform ${DURATION * 0.9}ms ${EASING}, opacity ${DURATION * 0.65}ms ease`;
+
+      // Animate current slide out
+      if (dir === 'next') {
+        currentBg.style.transform = 'translate3d(-100%, 0, 0)';
+        currentContent.style.transform = 'translate3d(-70px, 0, 0)';
+      } else {
+        currentBg.style.transform = 'translate3d(100%, 0, 0)';
+        currentContent.style.transform = 'translate3d(70px, 0, 0)';
+      }
+      currentContent.style.opacity = '0';
+
+      // Animate target slide in
+      targetBg.style.transform = 'translate3d(0, 0, 0)';
+      targetContent.style.transform = 'translate3d(0, 0, 0)';
+      targetContent.style.opacity = '1';
+
+      // Update pagination indicators immediately
       pageItems.forEach((btn, i) => {
-        btn.classList.toggle('active', i === activeIdx);
+        btn.classList.toggle('active', i === targetIdx);
       });
+
+      // Once animation completes, clean up classes and inline styles
+      setTimeout(() => {
+        bgSlides.forEach((slide, i) => {
+          slide.style.transition = '';
+          slide.classList.remove('animating');
+          if (i === targetIdx) {
+            slide.classList.add('active');
+            slide.style.transform = 'translate3d(0, 0, 0)';
+          } else {
+            slide.classList.remove('active');
+            slide.style.transform = 'translate3d(100%, 0, 0)';
+          }
+        });
+
+        contentSlides.forEach((content, i) => {
+          content.style.transition = '';
+          content.classList.remove('animating');
+          if (i === targetIdx) {
+            content.classList.add('active');
+            content.style.transform = 'translate3d(0, 0, 0)';
+            content.style.opacity = '1';
+          } else {
+            content.classList.remove('active');
+            content.style.transform = 'translate3d(70px, 0, 0)';
+            content.style.opacity = '0';
+          }
+        });
+
+        activeIdx = targetIdx;
+        isAnimating = false;
+      }, DURATION + 20);
     }
 
     function startAutoPlay() {
       stopAutoPlay();
       autoPlayTimer = setInterval(() => {
-        goToSlide(activeIdx + 1);
+        goToSlide((activeIdx + 1) % totalSlides, 'next');
       }, 7000);
     }
 
@@ -199,12 +282,12 @@ const heroSlides = [
     });
 
     prevBtn?.addEventListener('click', () => {
-      goToSlide(activeIdx - 1);
+      goToSlide((activeIdx - 1 + totalSlides) % totalSlides, 'prev');
       startAutoPlay();
     });
 
     nextBtn?.addEventListener('click', () => {
-      goToSlide(activeIdx + 1);
+      goToSlide((activeIdx + 1) % totalSlides, 'next');
       startAutoPlay();
     });
 
@@ -220,11 +303,11 @@ const heroSlides = [
     slider?.addEventListener('touchend', (e: TouchEvent) => {
       touchEndX = e.changedTouches[0].screenX;
       const diff = touchEndX - touchStartX;
-      if (Math.abs(diff) > 45) {
+      if (Math.abs(diff) > 40) {
         if (diff < 0) {
-          goToSlide(activeIdx + 1);
+          goToSlide((activeIdx + 1) % totalSlides, 'next');
         } else {
-          goToSlide(activeIdx - 1);
+          goToSlide((activeIdx - 1 + totalSlides) % totalSlides, 'prev');
         }
       }
       startAutoPlay();
@@ -233,8 +316,92 @@ const heroSlides = [
     slider?.addEventListener('mouseenter', stopAutoPlay);
     slider?.addEventListener('mouseleave', startAutoPlay);
 
+    // Pause autoplay when window is hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    });
+
     // Initial run
     startAutoPlay();
+
+    // Inline Brand Film playback controller
+    const filmFrame = document.getElementById('inline-film-container');
+    const filmVideo = document.getElementById('inline-film-video') as HTMLVideoElement | null;
+    const filmPlayBtn = document.getElementById('inline-film-play-btn');
+    const watchTextBtn = document.getElementById('play-inline-film-btn');
+
+    function playInlineFilm() {
+      if (!filmVideo || !filmFrame) return;
+
+      if (filmVideo.paused) {
+        filmVideo.controls = true;
+        const playPromise = filmVideo.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              filmFrame.classList.add('is-playing');
+            })
+            .catch(() => {
+              // Browser policy fallback: try muted playback if unmuted was blocked
+              filmVideo.muted = true;
+              filmVideo.play().then(() => {
+                filmFrame.classList.add('is-playing');
+              }).catch(() => {});
+            });
+        }
+      } else {
+        filmVideo.pause();
+      }
+    }
+
+    filmPlayBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      playInlineFilm();
+    });
+
+    filmFrame?.addEventListener('click', (e) => {
+      // If clicking on the frame when not actively playing with native controls
+      if (filmFrame && !filmFrame.classList.contains('is-playing')) {
+        playInlineFilm();
+      }
+    });
+
+    watchTextBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      filmFrame?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      playInlineFilm();
+    });
+
+    filmPlayBtn?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        playInlineFilm();
+      }
+    });
+
+    filmFrame?.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && !filmFrame.classList.contains('is-playing')) {
+        e.preventDefault();
+        playInlineFilm();
+      }
+    });
+
+    filmVideo?.addEventListener('play', () => {
+      filmFrame?.classList.add('is-playing');
+      if (filmVideo) filmVideo.controls = true;
+    });
+
+    filmVideo?.addEventListener('ended', () => {
+      if (filmFrame && filmVideo) {
+        filmFrame.classList.remove('is-playing');
+        filmVideo.controls = false;
+        filmVideo.currentTime = 0;
+      }
+    });
   </script>
 
   <!-- Hero Bottom Features -->
@@ -373,13 +540,24 @@ const heroSlides = [
         <span class="eyebrow" style="color:var(--champagne)">04 / Our design language</span>
         <h2>A closer<br /><em class="italic">look.</em></h2>
         <p>A short visual study of surfaces, light and detail. Explore the atmosphere behind the ROEL approach.</p>
-        <button type="button" class="text-link light" style="background:none;border-left:0;border-right:0;border-top:0;cursor:pointer" data-play-film="true">
+        <button type="button" class="text-link light" style="background:none;border-left:0;border-right:0;border-top:0;cursor:pointer" id="play-inline-film-btn" aria-label="Watch the visual study video">
           Watch the visual study <span class="arrow">↗</span>
         </button>
       </div>
-      <div class="film-frame" tabindex="0" role="button" data-play-film="true" aria-label="Play ROEL visual concept film">
-        <img src="/images/hero.webp" alt="Architectural door and slatted wood interior visual" loading="lazy" />
-        <div class="film-play"><span class="film-play-circle">▶</span></div>
+      <div class="film-frame" id="inline-film-container" tabindex="0" role="region" aria-label="ROEL visual concept film">
+        <video 
+          id="inline-film-video"
+          class="film-video"
+          src="/videos/video.mp4" 
+          poster="/images/hero.webp"
+          playsinline
+          webkit-playsinline
+          preload="metadata"
+          aria-label="ROEL architectural visual concept preview"
+        ></video>
+        <div class="film-play" id="inline-film-play-btn" role="button" tabindex="0" aria-label="Play ROEL visual concept film">
+          <span class="film-play-circle">▶</span>
+        </div>
         <div class="film-frame-bottom">
           <span>ROEL / VISUAL STUDY</span>
           <span>00:08 &nbsp; · &nbsp; CONCEPT PREVIEW</span>

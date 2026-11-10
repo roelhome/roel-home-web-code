@@ -31,6 +31,10 @@
   // Expose lenis globally for modal stops
   (window as any).roelLenis = lenis;
 
+  if (document.body.classList.contains('preloader-active')) {
+    lenis.stop();
+  }
+
   // Initialize GSAP scroll animations across page
   function initAnimations() {
     // Reveal text in sections

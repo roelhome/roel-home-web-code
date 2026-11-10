@@ -1,0 +1,235 @@
+---
+// Architectural Pre-loader with Logo & Expanding Champagne Hairline
+---
+
+<div id="roel-preloader" class="roel-preloader" aria-hidden="true">
+  <div class="preloader-inner">
+    <div class="preloader-logo-wrap">
+      <img 
+        src="/images/roel-logo-clean.png" 
+        alt="ROEL Home Solutions" 
+        class="preloader-logo"
+        width="170"
+        height="48"
+      />
+    </div>
+    
+    <div class="preloader-bar-wrap">
+      <div class="preloader-bar-track">
+        <div class="preloader-bar-fill" id="preloader-fill"></div>
+      </div>
+    </div>
+
+    <div class="preloader-tagline">
+      <span>Architectural Spaces &amp; Materials</span>
+    </div>
+  </div>
+</div>
+
+<style is:inline>
+  .roel-preloader {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    background-color: #19120c;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    user-select: none;
+    will-change: transform;
+    transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .roel-preloader.curtain-up {
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+
+  .roel-preloader.is-hidden {
+    display: none !important;
+  }
+
+  body.preloader-active {
+    overflow: hidden !important;
+  }
+
+  .preloader-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px;
+    max-width: 90vw;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .preloader-inner.fade-out {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+
+  .preloader-logo-wrap {
+    opacity: 0;
+    transform: scale(0.95);
+    animation: preloaderLogoIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+  }
+
+  .preloader-logo {
+    display: block;
+    width: clamp(140px, 18vw, 180px);
+    height: auto;
+    filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.4));
+  }
+
+  .preloader-bar-wrap {
+    margin-top: 24px;
+    margin-bottom: 14px;
+  }
+
+  .preloader-bar-track {
+    width: clamp(120px, 15vw, 150px);
+    height: 1px;
+    background: rgba(229, 191, 140, 0.2);
+    position: relative;
+    overflow: hidden;
+    border-radius: 1px;
+  }
+
+  .preloader-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: #e5bf8c;
+    box-shadow: 0 0 8px rgba(229, 191, 140, 0.6);
+    transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .preloader-tagline {
+    font-family: RoelSans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: clamp(8px, 1.8vw, 9.5px);
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: rgba(240, 226, 206, 0.6);
+    opacity: 0;
+    transform: translateY(6px);
+    animation: preloaderTaglineIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+  }
+
+  @keyframes preloaderLogoIn {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes preloaderTaglineIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .roel-preloader {
+      transition: opacity 0.3s ease !important;
+    }
+    .roel-preloader.curtain-up {
+      transform: none !important;
+      opacity: 0 !important;
+    }
+    .preloader-logo-wrap,
+    .preloader-tagline {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var preloader = document.getElementById('roel-preloader');
+    if (!preloader) return;
+
+    var urlParams = new URLSearchParams(window.location.search);
+    var forcePreloader = urlParams.get('preloader') === 'true';
+    var hasSeen = false;
+    try {
+      hasSeen = sessionStorage.getItem('roel_preloader_seen') === 'true';
+    } catch (e) {}
+
+    // If already seen in this session and not forcing via ?preloader=true
+    if (hasSeen && !forcePreloader) {
+      preloader.classList.add('is-hidden');
+      return;
+    }
+
+    // Lock page scroll during preloading
+    document.body.classList.add('preloader-active');
+    if (window.roelLenis) {
+      window.roelLenis.stop();
+    }
+
+    var fill = document.getElementById('preloader-fill');
+    var inner = preloader.querySelector('.preloader-inner');
+    var startTime = Date.now();
+    var MIN_DURATION = 1200; // ms
+    var MAX_TIMEOUT = 2800; // ms safety cap
+
+    // Start filling the progress hairline smoothly
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        if (fill) fill.style.width = '100%';
+      }, 60);
+    });
+
+    var dismissed = false;
+    function dismissPreloader() {
+      if (dismissed) return;
+      dismissed = true;
+
+      var elapsed = Date.now() - startTime;
+      var remaining = Math.max(0, MIN_DURATION - elapsed);
+
+      setTimeout(function () {
+        // Step 1: Fade out inner logo & text
+        if (inner) inner.classList.add('fade-out');
+
+        // Step 2: Lift curtain
+        setTimeout(function () {
+          preloader.classList.add('curtain-up');
+
+          // Unlock scroll as curtain begins lifting
+          document.body.classList.remove('preloader-active');
+          if (window.roelLenis) {
+            window.roelLenis.start();
+          }
+
+          // Mark session as seen
+          try {
+            sessionStorage.setItem('roel_preloader_seen', 'true');
+          } catch (e) {}
+
+          // Step 3: Remove from display after curtain animation finishes
+          setTimeout(function () {
+            preloader.classList.add('is-hidden');
+          }, 850);
+        }, 180);
+      }, remaining);
+    }
+
+    // Trigger on window load or safety timeout
+    if (document.readyState === 'complete') {
+      dismissPreloader();
+    } else {
+      window.addEventListener('load', dismissPreloader);
+      setTimeout(dismissPreloader, MAX_TIMEOUT);
+    }
+  })();
+</script>
