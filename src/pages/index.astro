@@ -402,6 +402,84 @@ const heroSlides = [
         filmVideo.currentTime = 0;
       }
     });
+
+    // Mobile Selected Products Carousel Controller
+    const prodTrack = document.getElementById('home-products-track');
+    const prodSteps = document.querySelectorAll<HTMLButtonElement>('#home-products-pagination .carousel-step');
+    const prodPrev = document.getElementById('home-prod-prev') as HTMLButtonElement | null;
+    const prodNext = document.getElementById('home-prod-next') as HTMLButtonElement | null;
+
+    if (prodTrack && prodSteps.length > 0) {
+      const getActiveProductIndex = () => {
+        const cards = prodTrack.querySelectorAll<HTMLElement>('.product-card');
+        if (!cards.length) return 0;
+        const scrollLeft = prodTrack.scrollLeft;
+        let closestIdx = 0;
+        let minDiff = Infinity;
+        cards.forEach((card, idx) => {
+          const cardLeft = card.offsetLeft - prodTrack.offsetLeft;
+          const diff = Math.abs(cardLeft - scrollLeft);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIdx = idx;
+          }
+        });
+        return closestIdx;
+      };
+
+      const syncPagination = () => {
+        const activeIdx = getActiveProductIndex();
+        const cards = prodTrack.querySelectorAll<HTMLElement>('.product-card');
+        prodSteps.forEach((step, idx) => {
+          step.classList.toggle('active', idx === activeIdx);
+        });
+        if (prodPrev) prodPrev.disabled = activeIdx === 0;
+        if (prodNext) prodNext.disabled = activeIdx >= cards.length - 1;
+      };
+
+      let scrollTimeout: any = null;
+      prodTrack.addEventListener('scroll', () => {
+        if (!scrollTimeout) {
+          scrollTimeout = requestAnimationFrame(() => {
+            syncPagination();
+            scrollTimeout = null;
+          });
+        }
+      }, { passive: true });
+
+      const scrollToProduct = (targetIdx: number) => {
+        const cards = prodTrack.querySelectorAll<HTMLElement>('.product-card');
+        if (targetIdx === 0) {
+          prodTrack.scrollTo({ left: 0, behavior: 'smooth' });
+        } else if (cards[targetIdx]) {
+          cards[targetIdx].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        }
+      };
+
+      prodSteps.forEach((step, idx) => {
+        step.addEventListener('click', () => {
+          scrollToProduct(idx);
+        });
+      });
+
+      prodPrev?.addEventListener('click', () => {
+        const currentIdx = getActiveProductIndex();
+        if (currentIdx > 0) {
+          scrollToProduct(currentIdx - 1);
+        }
+      });
+
+      prodNext?.addEventListener('click', () => {
+        const currentIdx = getActiveProductIndex();
+        const cards = prodTrack.querySelectorAll<HTMLElement>('.product-card');
+        if (currentIdx < cards.length - 1) {
+          scrollToProduct(currentIdx + 1);
+        }
+      });
+
+      // Synchronize initial state
+      syncPagination();
+    }
   </script>
 
   <!-- Hero Bottom Features -->
@@ -430,7 +508,7 @@ const heroSlides = [
   </section>
 
   <!-- Selected Products -->
-  <section class="section" style="padding-top:25px">
+  <section class="section selected-products-section" style="padding-top:25px">
     <div class="container">
       <div class="section-head gsap-fade-up">
         <div>
@@ -439,27 +517,48 @@ const heroSlides = [
         </div>
         <a class="text-link" href="/catalogue">All materials <span class="arrow">↗</span></a>
       </div>
-      <div class="product-grid gsap-stagger-parent">
-        {products.map((p) => (
-          <article class="product-card gsap-stagger-child">
-            <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
-              <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
-              <span class="on-image-tag">{p.category}</span>
-              <span class="image-arrow">↗</span>
-            </a>
-            <div class="product-info">
-              <div>
-                <div class="micro muted">{p.sku}</div>
-                <h3><a href={`/product/${p.id}`}>{p.name}</a></h3>
-                <p>{p.short}</p>
+      <div class="home-products-wrapper">
+        <div class="product-grid home-selected-grid gsap-stagger-parent" id="home-products-track" data-lenis-prevent>
+          {products.map((p, idx) => (
+            <article class="product-card gsap-stagger-child" data-prod-index={idx}>
+              <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
+                <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
+                <span class="on-image-tag">{p.category}</span>
+                <span class="image-arrow">↗</span>
+              </a>
+              <div class="product-info">
+                <div>
+                  <div class="micro muted">{p.sku}</div>
+                  <h3><a href={`/product/${p.id}`}>{p.name}</a></h3>
+                  <p>{p.short}</p>
+                </div>
+                <div class="product-price">
+                  <small>Sample price from</small>
+                  {p.price}
+                </div>
               </div>
-              <div class="product-price">
-                <small>Sample price from</small>
-                {p.price}
-              </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))}
+        </div>
+
+        <!-- Mobile Carousel Navigation Bar (Hidden on Desktop & Tablet) -->
+        <div class="home-products-mobile-bar" aria-label="Selected products navigation">
+          <div class="mobile-carousel-pagination" id="home-products-pagination">
+            <button type="button" class="carousel-step active" data-step="0" aria-label="View product 1">01</button>
+            <span class="carousel-dash" aria-hidden="true"></span>
+            <button type="button" class="carousel-step" data-step="1" aria-label="View product 2">02</button>
+            <span class="carousel-dash" aria-hidden="true"></span>
+            <button type="button" class="carousel-step" data-step="2" aria-label="View product 3">03</button>
+          </div>
+          <div class="mobile-carousel-controls">
+            <button type="button" class="carousel-arrow-btn prev" id="home-prod-prev" aria-label="Previous product" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <button type="button" class="carousel-arrow-btn next" id="home-prod-next" aria-label="Next product">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
       <p class="sample-caption">Design-stage sample product names, specifications and prices. Official ROEL products and quotations will be confirmed before launch.</p>
     </div>

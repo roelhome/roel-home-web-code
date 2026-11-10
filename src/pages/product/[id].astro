@@ -12,7 +12,30 @@ export async function getStaticPaths() {
 const { product, allProducts } = Astro.props;
 const otherProducts = allProducts.filter((p) => p.id !== product.id);
 
-const whatsappLink = waUrl(`Hello ROEL Home Solutions, I would like to enquire about ${product.name} (${product.sku}). Please share details and a quotation.`);
+// High-resolution architectural gallery images per product
+const productGalleries: Record<string, { src: string; alt: string }[]> = {
+  'walnut-fluted-wall-panel': [
+    { src: '/images/slat.webp', alt: 'Walnut Fluted Wall Panel - Detail Slat Texture' },
+    { src: '/images/hero-walls.jpg', alt: 'Walnut Fluted Wall Panel - Architectural Interior Space' },
+    { src: '/images/living.webp', alt: 'Walnut Fluted Wall Panel - Living Room Installation' },
+  ],
+  'signature-oak-door': [
+    { src: '/images/door.webp', alt: 'Signature Oak Door - Front Flush Perspective' },
+    { src: '/images/projectdoor.webp', alt: 'Signature Oak Door - Frame & Architectural Setting' },
+    { src: '/images/hero-doors.jpg', alt: 'Signature Oak Door - Illuminated Entrance System' },
+  ],
+  'botanical-cnc-screen': [
+    { src: '/images/screen.webp', alt: 'Botanical CNC Screen - Laser-Cut Pattern Detail' },
+    { src: '/images/divider.webp', alt: 'Botanical CNC Screen - Light Filtering Partition Setting' },
+    { src: '/images/wave.webp', alt: 'Botanical CNC Screen - Sculptural Light & Shadow' },
+  ],
+};
+
+const gallery = productGalleries[product.id] || [
+  { src: imgSrc(product.image), alt: `${product.name} architectural material sample` }
+];
+
+const whatsappLink = waUrl(`Hello ROEL Home Solutions, I would like to enquire about ${product.name} (${product.sku}) starting from ${product.price}. Please share finish details, dimension options and a quotation.`);
 
 // Product schema for rich search results
 const productSchema = {
@@ -39,58 +62,167 @@ const productSchema = {
   title={`${product.name} | ROEL Home Solutions`}
   description={product.short || product.description}
   image={imgSrc(product.image)}
+  bodyClass="is-pdp"
 >
   <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
 
-  <section class="container">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <a href="/">Home</a> / <a href="/catalogue">Products</a> / <span>{product.name}</span>
+  <section class="container pdp-section">
+    <!-- Breadcrumbs -->
+    <nav class="breadcrumbs pdp-breadcrumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="sep">/</span>
+      <a href="/catalogue">Catalogue</a>
+      <span class="sep">/</span>
+      <span class="active">{product.name}</span>
     </nav>
 
-    <div class="detail-grid">
-      <div class="detail-image">
-        <img src={imgSrc(product.image)} alt={`${product.name} sample product image`} />
-        <span class="label">{product.category}</span>
-      </div>
-      <div class="detail-body">
-        <div class="eyebrow">{product.sku} / MATERIAL STUDY</div>
-        <h1>{product.name}</h1>
-        <p>{product.description}</p>
-        <div class="detail-price">
-          <small>Illustrative starting price</small>
-          {product.price}
+    <!-- Main 2-Column E-Commerce PDP Grid -->
+    <div class="detail-grid pdp-grid">
+      <!-- Left Column: Visual Gallery Showcase -->
+      <div class="pdp-media-column">
+        <div class="detail-image pdp-main-image-wrap">
+          <img 
+            id="pdp-main-img" 
+            src={gallery[0].src} 
+            alt={gallery[0].alt} 
+            loading="eager" 
+          />
+          <span class="label pdp-category-pill">{product.category}</span>
+          <span class="pdp-zoom-cue">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            ARCHITECTURAL FINISH
+          </span>
         </div>
-        <div class="micro muted">Sample estimate · final quote depends on finish, dimensions and specification.</div>
-        <div class="detail-actions">
-          <a class="btn" href={whatsappLink} target="_blank" rel="noopener noreferrer">
-            Enquire on WhatsApp <span class="arrow">↗</span>
+
+        <!-- Thumbnail Selector -->
+        {gallery.length > 1 && (
+          <div class="pdp-thumbnails" role="tablist" aria-label="Product viewpoints">
+            {gallery.map((g, idx) => (
+              <button 
+                type="button" 
+                class={`pdp-thumb-btn ${idx === 0 ? 'active' : ''}`}
+                data-img-src={g.src}
+                data-img-alt={g.alt}
+                aria-label={`View photo ${idx + 1}`}
+              >
+                <img src={g.src} alt={g.alt} loading="lazy" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <!-- Right Column: Sticky E-Commerce Commercial & Enquiry Panel -->
+      <div class="pdp-summary-column">
+        <div class="pdp-meta-row">
+          <span class="pdp-sku-badge">{product.sku}</span>
+        </div>
+
+        <h1 class="pdp-product-title">{product.name}</h1>
+        <p class="pdp-product-desc">{product.description}</p>
+
+        <!-- E-Commerce Pricing Card -->
+        <div class="pdp-price-card">
+          <div class="pdp-price-top">
+            <span class="pdp-price-label">ILLUSTRATIVE STARTING PRICE</span>
+            <span class="pdp-price-currency">INR (₹)</span>
+          </div>
+          <div class="pdp-price-value">{product.price}</div>
+          <p class="pdp-price-disclaimer">
+            Sample rate based on standard design criteria. Final quotation confirmed based on specific project dimensions, finish selection, and custom detailing.
+          </p>
+        </div>
+
+        <!-- Primary E-Commerce Actions -->
+        <div class="pdp-actions">
+          <a class="btn-whatsapp-pdp" href={whatsappLink} target="_blank" rel="noopener noreferrer">
+            <div class="pdp-btn-content">
+              <svg viewBox="0 0 32 32" width="20" height="20" class="pdp-wa-svg">
+                <path fill="currentColor" d="M16 .5A15.5 15.5 0 0 0 2.5 16c0 2.8.7 5.4 2.1 7.8L3 30l6.4-1.7a15.4 15.4 0 0 0 6.6 1.5A15.5 15.5 0 0 0 31.5 16 15.5 15.5 0 0 0 16 .5zm0 28.3c-2.3 0-4.6-.6-6.6-1.8l-.5-.3-4 1.1 1.1-3.9-.3-.5A12.7 12.7 0 1 1 28.7 16 12.7 12.7 0 0 1 16 28.8zm7-9.5c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.5.3-.9.1-3.1-1.3-5.2-3.4-6.4-6.4-.2-.4 0-.6.2-.9.2-.2.4-.5.6-.7.2-.2.3-.4.4-.7.1-.2 0-.5-.1-.7-.1-.2-.9-2.2-1.2-3-.3-.8-.7-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.4 1.4-1.4 3.4 0 2 1.5 3.9 1.7 4.2.2.3 2.9 4.4 7 6.2 3.8 1.6 4.6 1.3 5.4 1.2.9-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.7-.4z"></path>
+              </svg>
+              <span>WhatsApp Enquiry</span>
+            </div>
+            <span class="arrow">↗</span>
           </a>
-          <button class="btn outline" type="button" data-enquiry={`${product.name} — ${product.sku}`}>
-            Request details <span class="arrow">↗</span>
+
+          <button class="btn outline pdp-btn-consult" type="button" data-enquiry={`${product.name} — ${product.sku}`}>
+            <span>Request Quote</span>
+            <span class="arrow">↗</span>
           </button>
         </div>
-        <div class="detail-specs">
-          <h3>At a glance</h3>
-          {product.specs.map((s, i) => (
-            <div class="spec-line">
-              <span>0{i + 1}</span>
-              <span>{s}</span>
+
+        <!-- E-Commerce Trust Badges Grid -->
+        <div class="pdp-trust-grid">
+          <div class="pdp-trust-item">
+            <div class="pdp-trust-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
             </div>
-          ))}
+            <div>
+              <strong>Pan-India Supply</strong>
+              <span>Direct delivery to site</span>
+            </div>
+          </div>
+          <div class="pdp-trust-item">
+            <div class="pdp-trust-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <div>
+              <strong>Custom Dimensions</strong>
+              <span>Tailored to CAD drawing</span>
+            </div>
+          </div>
+          <div class="pdp-trust-item">
+            <div class="pdp-trust-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div>
+              <strong>Tested Durability</strong>
+              <span>Premium architectural grade</span>
+            </div>
+          </div>
+          <div class="pdp-trust-item">
+            <div class="pdp-trust-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <div>
+              <strong>Material Guidance</strong>
+              <span>Fast WhatsApp consultation</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Structured Specifications Grid -->
+        <div class="pdp-specs-card">
+          <div class="pdp-specs-header">
+            <h3>Material Specifications</h3>
+            <span class="micro muted">At a glance</span>
+          </div>
+          <div class="pdp-specs-grid">
+            {product.specs.map((s, i) => (
+              <div class="pdp-spec-chip">
+                <span class="pdp-spec-num">0{i + 1}</span>
+                <span class="pdp-spec-val">{s}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Suggested Applications Statement Panel -->
     <div class="statement-panel">
       <h2>Thoughtful by<br /><em class="italic">design.</em></h2>
       <div>
-        <span class="micro">Suggested applications</span>
+        <span class="micro">Suggested architectural applications</span>
         <p style="margin-top:16px">{product.applications}</p>
-        <p style="margin-top:12px;font-size:11px">Technical details shown are sample content for website design and not a final product data sheet.</p>
+        <p style="margin-top:12px;font-size:11px;color:rgba(118,89,65,0.85)">
+          Technical details shown are architectural guidelines. Official shop drawings, finish swatches and hardware details are confirmed during project consultation.
+        </p>
       </div>
     </div>
   </section>
 
+  <!-- Related Materials -->
   <section class="section" style="padding-top:0">
     <div class="container">
       <h2 class="related-heading">Explore another <em class="italic">material.</em></h2>
@@ -119,6 +251,7 @@ const productSchema = {
     </div>
   </section>
 
+  <!-- CTA Band -->
   <section class="cta-band">
     <div class="container cta-row">
       <div>
@@ -131,4 +264,82 @@ const productSchema = {
       </div>
     </div>
   </section>
+
+  <!-- Mobile Bottom Sticky Quick Action Bar -->
+  <div class="pdp-mobile-sticky-bar" id="pdp-mobile-bar" aria-label="Quick product enquiry">
+    <div class="pdp-bar-info">
+      <div class="pdp-bar-name">{product.name}</div>
+      <div class="pdp-bar-price">{product.price}</div>
+    </div>
+    <a class="pdp-bar-btn" href={whatsappLink} target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 32 32" width="16" height="16">
+        <path fill="currentColor" d="M16 .5A15.5 15.5 0 0 0 2.5 16c0 2.8.7 5.4 2.1 7.8L3 30l6.4-1.7a15.4 15.4 0 0 0 6.6 1.5A15.5 15.5 0 0 0 31.5 16 15.5 15.5 0 0 0 16 .5zm0 28.3c-2.3 0-4.6-.6-6.6-1.8l-.5-.3-4 1.1 1.1-3.9-.3-.5A12.7 12.7 0 1 1 28.7 16 12.7 12.7 0 0 1 16 28.8zm7-9.5c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.5.3-.9.1-3.1-1.3-5.2-3.4-6.4-6.4-.2-.4 0-.6.2-.9.2-.2.4-.5.6-.7.2-.2.3-.4.4-.7.1-.2 0-.5-.1-.7-.1-.2-.9-2.2-1.2-3-.3-.8-.7-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.4 1.4-1.4 3.4 0 2 1.5 3.9 1.7 4.2.2.3 2.9 4.4 7 6.2 3.8 1.6 4.6 1.3 5.4 1.2.9-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.7-.4z"></path>
+      </svg>
+      <span>WhatsApp Enquiry</span>
+    </a>
+  </div>
+
+  <!-- Client Script for Gallery Switching & Mobile Sticky Visibility -->
+  <script>
+    // Gallery Image Switcher
+    const mainImg = document.getElementById('pdp-main-img') as HTMLImageElement | null;
+    const thumbBtns = document.querySelectorAll<HTMLButtonElement>('.pdp-thumb-btn');
+
+    thumbBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const newSrc = btn.getAttribute('data-img-src');
+        const newAlt = btn.getAttribute('data-img-alt');
+        if (mainImg && newSrc && mainImg.src !== newSrc) {
+          mainImg.style.opacity = '0.3';
+          mainImg.style.transform = 'scale(0.98)';
+          setTimeout(() => {
+            mainImg.src = newSrc;
+            if (newAlt) mainImg.alt = newAlt;
+            mainImg.style.opacity = '1';
+            mainImg.style.transform = 'scale(1)';
+          }, 150);
+          thumbBtns.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+        }
+      });
+    });
+
+    // Mobile Sticky Bar Observer: hide near bottom footer to prevent clutter
+    const mobileBar = document.getElementById('pdp-mobile-bar');
+    const footer = document.querySelector('footer');
+
+    if (mobileBar && footer && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            mobileBar.style.transform = 'translateY(100%)';
+            mobileBar.style.opacity = '0';
+          } else {
+            mobileBar.style.transform = 'translateY(0)';
+            mobileBar.style.opacity = '1';
+          }
+        });
+      }, { rootMargin: '0px 0px 80px 0px' });
+
+      observer.observe(footer);
+    }
+  </script>
+  <style>
+    .pdp-product-title {
+      font-family: RoelSerif, Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(34px, 3.6vw, 48px);
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      margin: 0 0 16px;
+    }
+    @media (max-width: 768px) {
+      .pdp-product-title {
+        font-size: 54px !important;
+        line-height: 1.08 !important;
+        margin: 10px 0 14px !important;
+      }
+    }
+  </style>
 </Layout>
