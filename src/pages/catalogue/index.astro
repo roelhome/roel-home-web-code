@@ -1,7 +1,12 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import CatalogueFilter from '../../components/CatalogueFilter';
-import { products } from '../../data/originalData.js';
+import { getProducts, getCategories } from '../../lib/supabase';
+
+export const prerender = false;
+
+const products = await getProducts();
+const categories = await getCategories();
 ---
 
 <Layout 
@@ -13,12 +18,12 @@ import { products } from '../../data/originalData.js';
       <span class="eyebrow">The ROEL edit</span>
       <h1>Our <em>products.</em></h1>
       <p>A considered range of architectural surfaces, doors and decorative features for contemporary spaces.</p>
-      <div class="page-count">03</div>
+      <div class="page-count">{String(products.length).padStart(2, '0')}</div>
     </div>
   </section>
 
   <section class="catalogue-section">
-    <CatalogueFilter client:load initialProducts={products} />
+    <CatalogueFilter client:load initialProducts={products} initialCategories={categories} />
   </section>
 
   <section class="cta-band">

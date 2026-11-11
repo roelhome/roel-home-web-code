@@ -1,3 +1,30 @@
+export interface ProductOptionValue {
+  name: string;        // e.g. "Wooden", "Steel", "Red", "Yellow"
+  color?: string;      // HEX code if swatch (e.g. "#e11d48")
+}
+
+export interface ProductOption {
+  id: string;          // e.g. "opt_material"
+  name: string;        // e.g. "Material", "Color", "Size"
+  values: ProductOptionValue[];
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;        // Combination title, e.g. "Wooden / Red"
+  title?: string;
+  sku: string;         // e.g. "ROEL-WD-RED"
+  price: string;       // Dedicated price for this exact combination, e.g. "₹12,000"
+  images: string[];    // Cloudflare R2 photos for this exact combination
+  options?: Record<string, string>; // e.g. { "Material": "Wooden", "Color": "Red" }
+  is_available?: boolean; // Can be toggled false if this pair is not produced
+  
+  // Backward compatibility fields
+  attribute_type?: string;
+  has_color?: boolean;
+  color?: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -10,6 +37,11 @@ export interface Product {
   specs: string[];
   applications: string;
   is_featured?: boolean;
+  status?: string;
+  options?: ProductOption[];
+  variants?: ProductVariant[];
+  gallery?: string[];
+  created_at?: string;
 }
 
 export const initialProducts: Product[] = [
@@ -29,7 +61,31 @@ export const initialProducts: Product[] = [
       'Finish and dimensions on request'
     ],
     applications: 'Living room feature walls, entry foyers, media backdrops and hospitality interiors.',
-    is_featured: true
+    is_featured: true,
+    status: 'published',
+    variants: [
+      {
+        id: 'var_wl01_walnut',
+        attribute_type: 'Finish / Color',
+        name: 'Natural Walnut',
+        sku: 'ROEL/WL-01-NW',
+        price: '₹420 / sq. ft.',
+        has_color: true,
+        color: '#5c4033',
+        images: ['/images/slat.webp']
+      },
+      {
+        id: 'var_wl01_oak',
+        attribute_type: 'Finish / Color',
+        name: 'Smoked Oak',
+        sku: 'ROEL/WL-01-SO',
+        price: '₹450 / sq. ft.',
+        has_color: true,
+        color: '#8b6c42',
+        images: ['/images/living.webp']
+      }
+    ],
+    gallery: ['/images/slat.webp', '/images/living.webp']
   },
   {
     id: 'signature-oak-door',
@@ -47,7 +103,29 @@ export const initialProducts: Product[] = [
       'Hardware selection by project'
     ],
     applications: 'Bedrooms, private offices, apartments and modern residences.',
-    is_featured: true
+    is_featured: true,
+    status: 'published',
+    variants: [
+      {
+        id: 'var_dr02_7x3',
+        attribute_type: 'Size / Dimensions',
+        name: '7 ft × 3 ft (Standard)',
+        sku: 'ROEL/DR-02-7X3',
+        price: '₹18,500 / unit',
+        has_color: false,
+        images: ['/images/door.webp']
+      },
+      {
+        id: 'var_dr02_8x4',
+        attribute_type: 'Size / Dimensions',
+        name: '8 ft × 4 ft (Grand Entrance)',
+        sku: 'ROEL/DR-02-8X4',
+        price: '₹24,500 / unit',
+        has_color: false,
+        images: ['/images/door.webp']
+      }
+    ],
+    gallery: ['/images/door.webp']
   },
   {
     id: 'botanical-cnc-screen',
@@ -65,6 +143,30 @@ export const initialProducts: Product[] = [
       'Multiple finish directions'
     ],
     applications: 'Zoning living and dining spaces, dividers, statement walls and reception areas.',
-    is_featured: true
+    is_featured: true,
+    status: 'published',
+    variants: [
+      {
+        id: 'var_dc03_champagne',
+        attribute_type: 'Finish / Color',
+        name: 'Champagne Gold Anodized',
+        sku: 'ROEL/DC-03-CG',
+        price: '₹760 / sq. ft.',
+        has_color: true,
+        color: '#e5bf8c',
+        images: ['/images/screen.webp']
+      },
+      {
+        id: 'var_dc03_matte_black',
+        attribute_type: 'Finish / Color',
+        name: 'Matte Architectural Black',
+        sku: 'ROEL/DC-03-MAB',
+        price: '₹720 / sq. ft.',
+        has_color: true,
+        color: '#19120c',
+        images: ['/images/divider.webp']
+      }
+    ],
+    gallery: ['/images/screen.webp', '/images/divider.webp']
   }
 ];

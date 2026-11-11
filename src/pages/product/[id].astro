@@ -1,15 +1,18 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { products, imgSrc, waUrl } from '../../data/originalData.js';
+export const prerender = false;
 
-export async function getStaticPaths() {
-  return products.map((product) => ({
-    params: { id: product.id },
-    props: { product, allProducts: products },
-  }));
+import Layout from '../../layouts/Layout.astro';
+import { getProductById, getProducts } from '../../lib/supabase';
+import { imgSrc, waUrl } from '../../data/originalData.js';
+
+const { id } = Astro.params;
+const product = id ? await getProductById(id) : undefined;
+
+if (!product) {
+  return Astro.redirect('/catalogue');
 }
 
-const { product, allProducts } = Astro.props;
+const allProducts = await getProducts();
 const otherProducts = allProducts.filter((p) => p.id !== product.id);
 
 // High-resolution architectural gallery images per product
@@ -31,11 +34,87 @@ const productGalleries: Record<string, { src: string; alt: string }[]> = {
   ],
 };
 
-const gallery = productGalleries[product.id] || [
-  { src: imgSrc(product.image), alt: `${product.name} architectural material sample` }
-];
+// Normalized Option Dimensions (supports both multi-dimensional options and single-attribute variants)
+interface OptionDimensionView {
+  name: string;
+  values: { name: string; color?: string }[];
+}
 
-const whatsappLink = waUrl(`Hello ROEL Home Solutions, I would like to enquire about ${product.name} (${product.sku}) starting from ${product.price}. Please share finish details, dimension options and a quotation.`);
+let dimensions: OptionDimensionView[] = [];
+
+if (product.options && Array.isArray(product.options) && product.options.length > 0) {
+  dimensions = product.options.filter((o) => o.values && o.values.length > 0);
+} else if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+  const dimsMap = new Map<string, { name: string; color?: string }[]>();
+  product.variants.forEach((v) => {
+    if (v.options && Object.keys(v.options).length > 0) {
+      Object.entries(v.options).forEach(([dimName, valName]) => {
+        if (!dimsMap.has(dimName)) dimsMap.set(dimName, []);
+        if (!dimsMap.get(dimName)!.some((item) => item.name === valName)) {
+          dimsMap.get(dimName)!.push({ name: valName, color: v.color });
+        }
+      });
+    } else {
+      const dimName = v.attribute_type?.trim() || 'Specification';
+      if (!dimsMap.has(dimName)) dimsMap.set(dimName, []);
+      if (!dimsMap.get(dimName)!.some((item) => item.name === v.name)) {
+        dimsMap.get(dimName)!.push({ name: v.name, color: v.color });
+      }
+    }
+  });
+
+  dimensions = Array.from(dimsMap.entries()).map(([name, values]) => ({ name, values }));
+}
+
+const allVariants = product.variants && Array.isArray(product.variants) ? product.variants : [];
+const initialVariant = allVariants.find((v) => v.is_available !== false) || allVariants[0] || null;
+const initialVariantImages = initialVariant?.images && initialVariant.images.length > 0 ? initialVariant.images : null;
+
+const initialGallery: { src: string; alt: string }[] = initialVariantImages
+  ? initialVariantImages.map((src: string, idx: number) => ({
+      src: imgSrc(src),
+      alt: `${product.name} - ${initialVariant?.name} finish ${idx + 1}`
+    }))
+  : (product.gallery && product.gallery.length > 0)
+  ? product.gallery.map((src: string, idx: number) => ({
+      src: imgSrc(src),
+      alt: `${product.name} gallery image ${idx + 1}`
+    }))
+  : productGalleries[product.id] || [
+      { src: imgSrc(product.image), alt: `${product.name} architectural material sample` }
+    ];
+
+const initialPrice = initialVariant?.price || product.price;
+const initialSku = initialVariant?.sku || product.sku;
+
+function formatPriceDisplay(priceStr: string | undefined): string {
+  if (!priceStr) return 'Specification On Request';
+  const trimmed = priceStr.trim();
+  if (trimmed.startsWith('₹') || trimmed.startsWith('$')) return trimmed;
+  const num = Number(trimmed.replace(/[^0-9.]/g, ''));
+  if (!isNaN(num) && num > 0) {
+    const formatted = num.toLocaleString('en-IN');
+    const suffix = trimmed.replace(/[0-9.,₹$\s]/g, '');
+    return suffix ? `₹${formatted} ${suffix}` : `₹${formatted}`;
+  }
+  return trimmed;
+}
+
+const formattedInitialPrice = formatPriceDisplay(initialPrice);
+
+// Build initial selected options map for each dimension
+const initialSelectedOptions: Record<string, string> = {};
+if (initialVariant?.options && Object.keys(initialVariant.options).length > 0) {
+  Object.assign(initialSelectedOptions, initialVariant.options);
+} else {
+  dimensions.forEach((dim) => {
+    if (dim.values.length > 0) {
+      initialSelectedOptions[dim.name] = dim.values[0].name;
+    }
+  });
+}
+
+const whatsappLink = waUrl(`Hello ROEL Home Solutions, I would like to enquire about ${product.name} (${initialSku}) starting from ${formattedInitialPrice}. Please share finish details, dimension options and a quotation.`);
 
 // Product schema for rich search results
 const productSchema = {
@@ -52,7 +131,7 @@ const productSchema = {
   "offers": {
     "@type": "Offer",
     "priceCurrency": "INR",
-    "price": product.price.replace(/[^0-9]/g, '') || "0",
+    "price": product.price ? product.price.replace(/[^0-9]/g, '') || "0" : "0",
     "availability": "https://schema.org/InStock"
   }
 };
@@ -83,8 +162,8 @@ const productSchema = {
         <div class="detail-image pdp-main-image-wrap">
           <img 
             id="pdp-main-img" 
-            src={gallery[0].src} 
-            alt={gallery[0].alt} 
+            src={initialGallery[0].src} 
+            alt={initialGallery[0].alt} 
             loading="eager" 
           />
           <span class="label pdp-category-pill">{product.category}</span>
@@ -95,47 +174,120 @@ const productSchema = {
         </div>
 
         <!-- Thumbnail Selector -->
-        {gallery.length > 1 && (
-          <div class="pdp-thumbnails" role="tablist" aria-label="Product viewpoints">
-            {gallery.map((g, idx) => (
-              <button 
-                type="button" 
-                class={`pdp-thumb-btn ${idx === 0 ? 'active' : ''}`}
-                data-img-src={g.src}
-                data-img-alt={g.alt}
-                aria-label={`View photo ${idx + 1}`}
-              >
-                <img src={g.src} alt={g.alt} loading="lazy" />
-              </button>
-            ))}
-          </div>
-        )}
+        <div class="pdp-thumbnails" id="pdp-thumbs-container" role="tablist" aria-label="Product viewpoints">
+          {initialGallery.map((g, idx) => (
+            <button 
+              type="button" 
+              class={`pdp-thumb-btn ${idx === 0 ? 'active' : ''}`}
+              data-img-src={g.src}
+              data-img-alt={g.alt}
+              aria-label={`View photo ${idx + 1}`}
+            >
+              <img src={g.src} alt={g.alt} loading="lazy" />
+            </button>
+          ))}
+        </div>
       </div>
 
-      <!-- Right Column: Sticky E-Commerce Commercial & Enquiry Panel -->
+      <!-- Right Column: Sticky Commercial & Enquiry Panel -->
       <div class="pdp-summary-column">
         <div class="pdp-meta-row">
-          <span class="pdp-sku-badge">{product.sku}</span>
+          <span class="pdp-sku-badge" id="pdp-sku-display">{initialSku}</span>
+          <span class="pdp-stock-badge">Specification On Request</span>
         </div>
 
         <h1 class="pdp-product-title">{product.name}</h1>
         <p class="pdp-product-desc">{product.description}</p>
 
+        <!-- Interactive Architectural Option Selectors (The Architectural Minimalist) -->
+        {dimensions.length > 0 && (
+          <div class="pdp-options-container">
+            {dimensions.map((dim) => {
+              const activeValue = initialSelectedOptions[dim.name] || dim.values[0]?.name || '';
+              const isColorDim = dim.name.toLowerCase().includes('color') || 
+                                 dim.name.toLowerCase().includes('finish') || 
+                                 dim.values.some((v) => !!v.color || v.name.startsWith('#'));
+
+              return (
+                <div class="pdp-option-group" data-dim-box={dim.name}>
+                  <div class="pdp-option-header">
+                    <span class="pdp-option-title">{dim.name}</span>
+                    <span class="pdp-option-divider">—</span>
+                    <span class="pdp-option-selected" data-dim-active-label={dim.name}>
+                      {activeValue}
+                    </span>
+                  </div>
+
+                  {isColorDim ? (
+                    <div class="pdp-swatches-grid" role="radiogroup" aria-label={`Choose ${dim.name}`}>
+                      {dim.values.map((val) => {
+                        const isActive = val.name === activeValue;
+                        const swatchColor = val.color || (val.name.startsWith('#') ? val.name : '#765941');
+                        return (
+                          <button
+                            type="button"
+                            class={`pdp-swatch-circle ${isActive ? 'active' : ''}`}
+                            data-option-dim={dim.name}
+                            data-option-val={val.name}
+                            style={`background-color: ${swatchColor};`}
+                            title={val.name}
+                            aria-label={`Select ${val.name}`}
+                          >
+                            <span class="sr-only">{val.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div class="pdp-pills-grid" role="radiogroup" aria-label={`Choose ${dim.name}`}>
+                      {dim.values.map((val) => {
+                        const isActive = val.name === activeValue;
+                        return (
+                          <button
+                            type="button"
+                            class={`pdp-arch-pill ${isActive ? 'active' : ''}`}
+                            data-option-dim={dim.name}
+                            data-option-val={val.name}
+                            title={`Select ${val.name}`}
+                          >
+                            <span>{val.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Hidden Matrix Data for Real-Time Combinations Resolver */}
+        <div
+          id="pdp-matrix-data"
+          style="display:none;"
+          data-variants={JSON.stringify(allVariants)}
+          data-base-price={product.price}
+          data-base-sku={product.sku}
+          data-product-name={product.name}
+          data-initial-selections={JSON.stringify(initialSelectedOptions)}
+        />
+
         <!-- E-Commerce Pricing Card -->
         <div class="pdp-price-card">
           <div class="pdp-price-top">
-            <span class="pdp-price-label">ILLUSTRATIVE STARTING PRICE</span>
+            <span class="pdp-price-label">ESTIMATED ARCHITECTURAL RATE</span>
             <span class="pdp-price-currency">INR (₹)</span>
           </div>
-          <div class="pdp-price-value">{product.price}</div>
+          <div class="pdp-price-value" id="pdp-price-display">{formattedInitialPrice}</div>
           <p class="pdp-price-disclaimer">
-            Sample rate based on standard design criteria. Final quotation confirmed based on specific project dimensions, finish selection, and custom detailing.
+            Rate varies based on dimension schedules, quantity, custom finishes, and site delivery specifications.
           </p>
         </div>
 
         <!-- Primary E-Commerce Actions -->
         <div class="pdp-actions">
-          <a class="btn-whatsapp-pdp" href={whatsappLink} target="_blank" rel="noopener noreferrer">
+          <a class="btn-whatsapp-pdp" id="pdp-wa-btn" href={whatsappLink} target="_blank" rel="noopener noreferrer">
             <div class="pdp-btn-content">
               <svg viewBox="0 0 32 32" width="20" height="20" class="pdp-wa-svg">
                 <path fill="currentColor" d="M16 .5A15.5 15.5 0 0 0 2.5 16c0 2.8.7 5.4 2.1 7.8L3 30l6.4-1.7a15.4 15.4 0 0 0 6.6 1.5A15.5 15.5 0 0 0 31.5 16 15.5 15.5 0 0 0 16 .5zm0 28.3c-2.3 0-4.6-.6-6.6-1.8l-.5-.3-4 1.1 1.1-3.9-.3-.5A12.7 12.7 0 1 1 28.7 16 12.7 12.7 0 0 1 16 28.8zm7-9.5c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.5.3-.9.1-3.1-1.3-5.2-3.4-6.4-6.4-.2-.4 0-.6.2-.9.2-.2.4-.5.6-.7.2-.2.3-.4.4-.7.1-.2 0-.5-.1-.7-.1-.2-.9-2.2-1.2-3-.3-.8-.7-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.4 1.4-1.4 3.4 0 2 1.5 3.9 1.7 4.2.2.3 2.9 4.4 7 6.2 3.8 1.6 4.6 1.3 5.4 1.2.9-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.7-.4z"></path>
@@ -145,7 +297,7 @@ const productSchema = {
             <span class="arrow">↗</span>
           </a>
 
-          <button class="btn outline pdp-btn-consult" type="button" data-enquiry={`${product.name} — ${product.sku}`}>
+          <button class="btn outline pdp-btn-consult" type="button" data-enquiry={`${product.name} — ${initialSku}`}>
             <span>Request Quote</span>
             <span class="arrow">↗</span>
           </button>
@@ -227,7 +379,7 @@ const productSchema = {
     <div class="container">
       <h2 class="related-heading">Explore another <em class="italic">material.</em></h2>
       <div class="product-grid">
-        {otherProducts.map((p) => (
+        {otherProducts.slice(0, 3).map((p) => (
           <article class="product-card">
             <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
               <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
@@ -242,7 +394,7 @@ const productSchema = {
               </div>
               <div class="product-price">
                 <small>Sample price from</small>
-                {p.price}
+                {formatPriceDisplay(p.price)}
               </div>
             </div>
           </article>
@@ -269,9 +421,9 @@ const productSchema = {
   <div class="pdp-mobile-sticky-bar" id="pdp-mobile-bar" aria-label="Quick product enquiry">
     <div class="pdp-bar-info">
       <div class="pdp-bar-name">{product.name}</div>
-      <div class="pdp-bar-price">{product.price}</div>
+      <div class="pdp-bar-price" id="pdp-bar-price">{formattedInitialPrice}</div>
     </div>
-    <a class="pdp-bar-btn" href={whatsappLink} target="_blank" rel="noopener noreferrer">
+    <a class="pdp-bar-btn" id="pdp-bar-btn" href={whatsappLink} target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 32 32" width="16" height="16">
         <path fill="currentColor" d="M16 .5A15.5 15.5 0 0 0 2.5 16c0 2.8.7 5.4 2.1 7.8L3 30l6.4-1.7a15.4 15.4 0 0 0 6.6 1.5A15.5 15.5 0 0 0 31.5 16 15.5 15.5 0 0 0 16 .5zm0 28.3c-2.3 0-4.6-.6-6.6-1.8l-.5-.3-4 1.1 1.1-3.9-.3-.5A12.7 12.7 0 1 1 28.7 16 12.7 12.7 0 0 1 16 28.8zm7-9.5c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.5.3-.9.1-3.1-1.3-5.2-3.4-6.4-6.4-.2-.4 0-.6.2-.9.2-.2.4-.5.6-.7.2-.2.3-.4.4-.7.1-.2 0-.5-.1-.7-.1-.2-.9-2.2-1.2-3-.3-.8-.7-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.4 1.4-1.4 3.4 0 2 1.5 3.9 1.7 4.2.2.3 2.9 4.4 7 6.2 3.8 1.6 4.6 1.3 5.4 1.2.9-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.7-.4z"></path>
       </svg>
@@ -279,32 +431,165 @@ const productSchema = {
     </a>
   </div>
 
-  <!-- Client Script for Gallery Switching & Mobile Sticky Visibility -->
-  <script>
-    // Gallery Image Switcher
-    const mainImg = document.getElementById('pdp-main-img') as HTMLImageElement | null;
-    const thumbBtns = document.querySelectorAll<HTMLButtonElement>('.pdp-thumb-btn');
+  <!-- Client Script for Interactive Variant Selection & Gallery Switching -->
+  <script is:inline define:vars={{ productName: product.name }}>
+    function resolveImgSrc(key) {
+      if (!key) return '/images/slat.webp';
+      if (key.startsWith('/') || key.startsWith('http') || key.startsWith('data:')) return key;
+      return '/images/' + key + '.webp';
+    }
 
-    thumbBtns.forEach((btn) => {
+    function formatPrice(priceVal) {
+      if (!priceVal) return 'Specification On Request';
+      const trimmed = String(priceVal).trim();
+      if (trimmed.startsWith('₹') || trimmed.startsWith('$')) return trimmed;
+      const num = Number(trimmed.replace(/[^0-9.]/g, ''));
+      if (!isNaN(num) && num > 0) {
+        const formatted = num.toLocaleString('en-IN');
+        const suffix = trimmed.replace(/[0-9.,₹$\s]/g, '');
+        return suffix ? `₹${formatted} ${suffix}` : `₹${formatted}`;
+      }
+      return trimmed;
+    }
+
+    const mainImg = document.getElementById('pdp-main-img');
+    const thumbsContainer = document.getElementById('pdp-thumbs-container');
+    const skuDisplay = document.getElementById('pdp-sku-display');
+    const priceDisplay = document.getElementById('pdp-price-display');
+    const barPriceDisplay = document.getElementById('pdp-bar-price');
+    const waBtn = document.getElementById('pdp-wa-btn');
+    const barWaBtn = document.getElementById('pdp-bar-btn');
+
+    function attachThumbListeners() {
+      const thumbBtns = document.querySelectorAll('.pdp-thumb-btn');
+      thumbBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const newSrc = btn.getAttribute('data-img-src');
+          const newAlt = btn.getAttribute('data-img-alt');
+          if (mainImg && newSrc && mainImg.src !== newSrc) {
+            mainImg.style.opacity = '0.3';
+            mainImg.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+              mainImg.src = newSrc;
+              if (newAlt) mainImg.alt = newAlt;
+              mainImg.style.opacity = '1';
+              mainImg.style.transform = 'scale(1)';
+            }, 140);
+            thumbBtns.forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
+        });
+      });
+    }
+
+    attachThumbListeners();
+
+    // Multi-Dimensional Combinations Resolver
+    const matrixEl = document.getElementById('pdp-matrix-data');
+    let variantsMatrix = [];
+    let currentSelections = {};
+
+    if (matrixEl) {
+      try {
+        variantsMatrix = JSON.parse(matrixEl.getAttribute('data-variants') || '[]');
+        currentSelections = JSON.parse(matrixEl.getAttribute('data-initial-selections') || '{}');
+      } catch (err) {
+        console.error('Failed to parse variants matrix:', err);
+      }
+    }
+
+    // Query both architectural pills and circular swatches
+    const optionButtons = document.querySelectorAll('button[data-option-dim]');
+
+    optionButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
-        const newSrc = btn.getAttribute('data-img-src');
-        const newAlt = btn.getAttribute('data-img-alt');
-        if (mainImg && newSrc && mainImg.src !== newSrc) {
-          mainImg.style.opacity = '0.3';
-          mainImg.style.transform = 'scale(0.98)';
-          setTimeout(() => {
-            mainImg.src = newSrc;
-            if (newAlt) mainImg.alt = newAlt;
-            mainImg.style.opacity = '1';
-            mainImg.style.transform = 'scale(1)';
-          }, 150);
-          thumbBtns.forEach((b) => b.classList.remove('active'));
-          btn.classList.add('active');
+        const dim = btn.getAttribute('data-option-dim') || '';
+        const val = btn.getAttribute('data-option-val') || '';
+
+        // 1. Update selection state for this dimension
+        currentSelections[dim] = val;
+
+        // 2. Highlight clicked button in its dimension group
+        document.querySelectorAll(`button[data-option-dim="${dim}"]`).forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // 3. Update active label in header
+        const activeLabel = document.querySelector(`[data-dim-active-label="${dim}"]`);
+        if (activeLabel) activeLabel.textContent = val;
+
+        // 4. Resolve matching variant combination from matrix
+        const matchedVariant = variantsMatrix.find((v) => {
+          if (v.options && Object.keys(v.options).length > 0) {
+            return Object.entries(currentSelections).every(([k, expectedVal]) => v.options[k] === expectedVal);
+          }
+          // Fallback matching by name
+          return Object.values(currentSelections).every((expectedVal) => (v.name || '').includes(expectedVal));
+        });
+
+        const combinedSummary = Object.values(currentSelections).join(' / ') || val;
+        const rawPrice = matchedVariant?.price || (matrixEl ? matrixEl.getAttribute('data-base-price') : '') || '';
+        const activeSku = matchedVariant?.sku || (matrixEl ? matrixEl.getAttribute('data-base-sku') : '') || '';
+        const isAvail = matchedVariant ? (matchedVariant.is_available !== false) : true;
+
+        const formattedPrice = formatPrice(rawPrice);
+
+        // 5. Update price display
+        if (priceDisplay) {
+          priceDisplay.textContent = isAvail ? formattedPrice : 'Out of Specification';
+        }
+        if (barPriceDisplay) {
+          barPriceDisplay.textContent = isAvail ? formattedPrice : 'Unavailable';
+        }
+        if (skuDisplay && activeSku) {
+          skuDisplay.textContent = activeSku;
+        }
+
+        // 6. Update WhatsApp Enquiry Links
+        const waText = isAvail
+          ? `Hello ROEL Home Solutions, I would like to enquire about ${productName} — ${combinedSummary} (${activeSku}) priced at ${formattedPrice}. Please share details and dimension options.`
+          : `Hello ROEL Home Solutions, I would like to check custom availability for ${productName} — ${combinedSummary} (${activeSku}).`;
+        const waUrl = 'https://wa.me/918111899991?text=' + encodeURIComponent(waText);
+        if (waBtn) waBtn.setAttribute('href', waUrl);
+        if (barWaBtn) barWaBtn.setAttribute('href', waUrl);
+
+        // Update consultation button
+        const quoteBtn = document.querySelector('.pdp-btn-consult');
+        if (quoteBtn) {
+          quoteBtn.setAttribute('data-enquiry', `${productName} — ${combinedSummary} (${activeSku}) - ${formattedPrice}`);
+        }
+
+        // 7. Update Images & Thumbs if matched variant has dedicated photos
+        if (matchedVariant?.images && Array.isArray(matchedVariant.images) && matchedVariant.images.length > 0) {
+          const firstImg = resolveImgSrc(matchedVariant.images[0]);
+          if (mainImg) {
+            mainImg.style.opacity = '0.3';
+            setTimeout(() => {
+              mainImg.src = firstImg;
+              mainImg.alt = `${productName} - ${combinedSummary}`;
+              mainImg.style.opacity = '1';
+            }, 140);
+          }
+
+          if (thumbsContainer) {
+            thumbsContainer.innerHTML = '';
+            matchedVariant.images.forEach((imgKey, idx) => {
+              const resolved = resolveImgSrc(imgKey);
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.className = `pdp-thumb-btn ${idx === 0 ? 'active' : ''}`;
+              b.setAttribute('data-img-src', resolved);
+              b.setAttribute('data-img-alt', `${productName} - ${combinedSummary} view ${idx + 1}`);
+              b.setAttribute('aria-label', `View photo ${idx + 1}`);
+              b.innerHTML = `<img src="${resolved}" alt="${productName} photo ${idx + 1}" loading="lazy" />`;
+              thumbsContainer.appendChild(b);
+            });
+            attachThumbListeners();
+          }
         }
       });
     });
 
-    // Mobile Sticky Bar Observer: hide near bottom footer to prevent clutter
+    // Mobile Sticky Bar Observer
     const mobileBar = document.getElementById('pdp-mobile-bar');
     const footer = document.querySelector('footer');
 
@@ -324,6 +609,7 @@ const productSchema = {
       observer.observe(footer);
     }
   </script>
+
   <style>
     .pdp-product-title {
       font-family: RoelSerif, Georgia, serif;
@@ -334,11 +620,172 @@ const productSchema = {
       color: var(--ink);
       margin: 0 0 16px;
     }
+
+    /* ==========================================================================
+       OPTION 1: THE ARCHITECTURAL MINIMALIST (Clean, Uncluttered, Luxury)
+       ========================================================================== */
+    .pdp-options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .pdp-option-group {
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(118, 89, 65, 0.14);
+    }
+
+    .pdp-option-group:last-child {
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+
+    .pdp-option-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+
+    .pdp-option-title {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--walnut, #765941);
+      font-size: 11px;
+    }
+
+    .pdp-option-divider {
+      color: rgba(118, 89, 65, 0.35);
+      font-size: 11px;
+    }
+
+    .pdp-option-selected {
+      font-weight: 600;
+      color: var(--ink, #19120C);
+      letter-spacing: 0.015em;
+    }
+
+    /* Architectural Material / Size Pills */
+    .pdp-pills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pdp-arch-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--ink, #19120C);
+      background-color: #FAF7F2;
+      border: 1px solid rgba(118, 89, 65, 0.26);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    .pdp-arch-pill:hover {
+      background-color: #F2EAE0;
+      border-color: var(--walnut, #765941);
+      transform: translateY(-1px);
+    }
+
+    .pdp-arch-pill.active {
+      background-color: var(--ink, #19120C);
+      border-color: var(--ink, #19120C);
+      color: var(--ivory, #F0E2CE);
+      box-shadow: 0 2px 8px rgba(25, 18, 12, 0.22);
+      transform: translateY(0);
+      font-weight: 600;
+    }
+
+    /* Pure Circular Color Swatch Discs */
+    .pdp-swatches-grid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      padding: 4px 2px;
+    }
+
+    .pdp-swatch-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      position: relative;
+      padding: 0;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    .pdp-swatch-circle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Concentric Apple-Style Double Ring when Active */
+    .pdp-swatch-circle.active {
+      box-shadow: 0 0 0 2.5px #FFFFFF, 0 0 0 4.5px var(--ink, #19120C);
+      transform: scale(1.05);
+    }
+
+    .pdp-swatch-circle:focus-visible {
+      outline: 2px solid var(--walnut, #765941);
+      outline-offset: 4px;
+    }
+
+    /* Accessible Screen Reader Utility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
     @media (max-width: 768px) {
+      /* Remove thumbnail row on mobile to save vertical space so variant updates are visible */
+      .pdp-thumbnails {
+        display: none !important;
+      }
+
+      .pdp-main-image-wrap {
+        height: clamp(260px, 40vh, 320px) !important;
+      }
+
+      .pdp-grid {
+        gap: 16px !important;
+        padding-bottom: 35px !important;
+      }
+
       .pdp-product-title {
-        font-size: 54px !important;
-        line-height: 1.08 !important;
-        margin: 10px 0 14px !important;
+        font-size: clamp(32px, 8vw, 42px) !important;
+        line-height: 1.1 !important;
+        margin: 8px 0 12px !important;
+      }
+
+      .pdp-product-desc {
+        font-size: 12.5px !important;
+        line-height: 1.65 !important;
+        margin: 0 0 16px !important;
       }
     }
   </style>

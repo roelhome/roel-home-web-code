@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { products, services, projects } from '../data/originalData.js';
+import { products as defaultProducts, services as defaultServices, projects as defaultProjects } from '../data/originalData.js';
+import { supabase } from '../lib/supabase';
 
 export default function SearchModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [productsList, setProductsList] = useState<any[]>(defaultProducts);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -32,6 +34,17 @@ export default function SearchModal() {
     document.addEventListener('click', handleTrigger);
     window.addEventListener('keydown', handleKeyDown);
 
+    // Fetch fresh published products from Supabase
+    supabase
+      .from('products')
+      .select('*')
+      .eq('status', 'published')
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setProductsList(data);
+        }
+      });
+
     return () => {
       document.removeEventListener('click', handleTrigger);
       window.removeEventListener('keydown', handleKeyDown);
@@ -55,19 +68,19 @@ export default function SearchModal() {
   }, [isOpen]);
 
   const searchItems = [
-    ...products.map((p) => ({
+    ...productsList.map((p) => ({
       title: p.name,
       type: 'Product',
       url: `/product/${p.id}`,
-      desc: p.category
+      desc: p.category_id || p.category || 'Architectural Material'
     })),
-    ...services.map((s) => ({
+    ...defaultServices.map((s) => ({
       title: s.name,
       type: 'Service',
       url: `/service/${s.id}`,
       desc: s.tag || s.summary
     })),
-    ...projects.map((p) => ({
+    ...defaultProjects.map((p) => ({
       title: p.name,
       type: 'Project',
       url: `/project/${p.id}`,
@@ -97,66 +110,61 @@ export default function SearchModal() {
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="modal-root open" 
-      data-lenis-prevent="true"
-      role="dialog" 
+    <div
+      className="modal-root open"
+      role="dialog"
       aria-modal="true"
+      aria-labelledby="search-modal-title"
+      onClick={() => setIsOpen(false)}
     >
-      <div 
-        className="modal-shade" 
-        onClick={() => setIsOpen(false)} 
-        aria-hidden="true" 
-      />
-      <div 
-        className="modal-dialog search-box" 
-        data-lenis-prevent="true"
+      <div className="modal-shade" />
+      <div
+        className="modal-dialog search-box"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="search-head">
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#765941" strokeWidth="1.8">
-            <circle cx="10.8" cy="10.8" r="6.8" />
-            <path d="m16 16 5 5" />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style={{ opacity: 0.6 }}>
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input 
+          <input
             ref={inputRef}
-            type="search" 
-            id="site-search" 
-            placeholder="Search materials, services, projects..." 
-            aria-label="Search ROEL website" 
-            autoComplete="off"
+            type="search"
+            id="search-modal-title"
+            placeholder="Search products, finishes, services..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button 
-            type="button" 
-            className="modal-close" 
-            onClick={() => setIsOpen(false)} 
+          <button
+            type="button"
+            className="modal-close"
+            onClick={() => setIsOpen(false)}
             aria-label="Close search"
           >
             ×
           </button>
         </div>
 
-        <div className="search-results" id="search-results">
-          {matched.length > 0 ? (
-            matched.map((item, idx) => (
-              <a 
-                key={idx} 
-                className="search-result" 
+        <div className="search-results">
+          {matched.length === 0 ? (
+            <div style={{ padding: '30px 0', textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
+              No architectural materials found matching &ldquo;{query}&rdquo;
+            </div>
+          ) : (
+            matched.map((item) => (
+              <a
+                key={item.url}
                 href={item.url}
+                className="search-result"
                 onClick={() => setIsOpen(false)}
               >
-                <span>
+                <div>
                   <strong>{item.title}</strong>
-                  <small>{item.type} / {item.desc}</small>
-                </span>
+                  <small>{item.type} — {item.desc}</small>
+                </div>
                 <span className="arrow">↗</span>
               </a>
             ))
-          ) : (
-            <p style={{ padding: '22px 0', color: 'var(--muted)' }}>
-              No results for "{query}". Try “doors”, “materials”, “wall” or “projects”.
-            </p>
           )}
         </div>
       </div>

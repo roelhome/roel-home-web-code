@@ -1,15 +1,19 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { projects, imgSrc, waUrl } from '../../data/originalData.js';
+export const prerender = false;
 
-export async function getStaticPaths() {
-  return projects.map((project) => ({
-    params: { id: project.id },
-    props: { project, allProjects: projects },
-  }));
+import Layout from '../../layouts/Layout.astro';
+import { getProjectById, getProjects } from '../../lib/supabase';
+import { imgSrc, waUrl } from '../../data/originalData.js';
+
+const { id } = Astro.params;
+const project = id ? await getProjectById(id) : undefined;
+
+if (!project) {
+  return Astro.redirect('/projects');
 }
 
-const { project } = Astro.props;
+const allProjects = await getProjects();
+const otherProjects = allProjects.filter((p) => p.id !== project.id);
 
 const whatsappLink = waUrl(`Hello ROEL, I viewed ${project.name} on your website and would like to discuss a similar design direction.`);
 ---
@@ -26,13 +30,13 @@ const whatsappLink = waUrl(`Hello ROEL, I viewed ${project.name} on your website
   </div>
 
   <section class="container project-detail-header">
-    <span class="eyebrow">{project.isDemo ? 'Illustrative portfolio concept' : 'Project portfolio entry'} / {project.category}</span>
+    <span class="eyebrow">Project Portfolio / {project.category}</span>
     <h1>{project.name}</h1>
     <div class="project-meta-line">
       <div><small>Location</small><span>{project.location}</span></div>
       <div><small>Project type</small><span>{project.category}</span></div>
       <div><small>Year</small><span>{project.year}</span></div>
-      <div><small>Portfolio status</small><span>{project.isDemo ? 'Design sample' : 'Portfolio entry'}</span></div>
+      <div><small>Status</small><span>Completed Portfolio</span></div>
     </div>
   </section>
 
@@ -48,12 +52,38 @@ const whatsappLink = waUrl(`Hello ROEL, I viewed ${project.name} on your website
     <div>
       <p>{project.story || project.summary}</p>
       <p>{project.summary}</p>
-      <p style="font-size:11px">{project.isDemo ? 'This is a sample portfolio narrative created for website design.' : 'This entry was added to the ROEL portfolio.'}</p>
       <a class="btn outline" href={whatsappLink} target="_blank" rel="noopener noreferrer">
         Discuss a similar space <span class="arrow">↗</span>
       </a>
     </div>
   </section>
+
+  <!-- Other Projects -->
+  {otherProjects.length > 0 && (
+    <section class="section" style="padding-top:0">
+      <div class="container">
+        <h2 class="related-heading">Explore another <em class="italic">space.</em></h2>
+        <div class="project-grid">
+          {otherProjects.slice(0, 2).map((p) => (
+            <a class="project-card" href={`/project/${p.id}`}>
+              <div class="project-photo">
+                <img src={imgSrc(p.image)} alt={`${p.name} architectural showcase`} loading="lazy" />
+                <span class="project-pill">{p.category}</span>
+                <div class="project-overlay">
+                  <span>{p.category}</span>
+                  <h3>{p.name}</h3>
+                </div>
+              </div>
+              <div class="project-location">
+                <span>{p.location} &nbsp;/&nbsp; {p.year}</span>
+                <span>↗</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
 
   <section class="cta-band">
     <div class="container cta-row">

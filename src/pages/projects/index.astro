@@ -1,6 +1,11 @@
 ---
+export const prerender = false;
+
 import Layout from '../../layouts/Layout.astro';
-import { projects, imgSrc } from '../../data/originalData.js';
+import { getProjects } from '../../lib/supabase';
+import { imgSrc } from '../../data/originalData.js';
+
+const projects = await getProjects();
 ---
 
 <Layout 
@@ -12,21 +17,18 @@ import { projects, imgSrc } from '../../data/originalData.js';
       <span class="eyebrow">A visual journal</span>
       <h1>Material in <em>context.</em></h1>
       <p>Explore the character of spaces shaped by warm materials, thoughtful proportions and contemporary details.</p>
-      <div class="page-count">03</div>
+      <div class="page-count">{String(projects.length).padStart(2, '0')}</div>
     </div>
   </section>
 
   <section class="section">
     <div class="container">
-      <div class="catalogue-note">
-        Portfolio entries below are illustrative concepts for design review. They do not represent verified completed ROEL projects. Add real project photography and approved details during subsequent project phases.
-      </div>
       <div class="project-grid">
         {projects.map((p) => (
           <a class="project-card" href={`/project/${p.id}`}>
             <div class="project-photo">
               <img src={imgSrc(p.image)} alt={`${p.name} architectural showcase`} loading="lazy" />
-              <span class="project-pill">{p.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
+              <span class="project-pill">{p.category}</span>
               <div class="project-overlay">
                 <span>{p.category}</span>
                 <h3>{p.name}</h3>

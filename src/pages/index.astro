@@ -1,57 +1,14 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { products, services, projects, imgSrc } from '../data/originalData.js';
+export const prerender = false;
 
-const heroSlides = [
-  {
-    id: 'doors',
-    pillar: 'DOORS',
-    image: '/images/hero-doors.jpg',
-    imageMobile: '/images/hero-doors-mobile.jpg',
-    alt: 'Roel Architectural modern living interior with illuminated walnut door and wood slat panels',
-    eyebrow: [
-      { text: 'DOORS', active: true },
-      { text: 'WALL SOLUTIONS', active: false },
-      { text: 'SURFACES', active: false },
-    ],
-    title: 'Architectural<br />Solutions for<br />Modern Living',
-    desc: 'Premium distinctive doors, engineered frames and bespoke entrance systems that bring timeless design, security and lasting craftsmanship to your space.',
-    ctaText: 'EXPLORE COLLECTIONS',
-    ctaLink: '/catalogue',
-  },
-  {
-    id: 'walls',
-    pillar: 'WALL SOLUTIONS',
-    image: '/images/hero-walls.jpg',
-    imageMobile: '/images/hero-walls-mobile.jpg',
-    alt: 'Luxury architectural wall systems, walnut fluted wood slats, and warm acoustic paneling',
-    eyebrow: [
-      { text: 'DOORS', active: false },
-      { text: 'WALL SOLUTIONS', active: true },
-      { text: 'SURFACES', active: false },
-    ],
-    title: 'Bespoke Paneling<br />& Architectural<br />Wall Systems',
-    desc: 'Acoustic fluted slats, luxury wood claddings and refined feature wall systems designed to add depth, warmth and textural drama to contemporary interiors.',
-    ctaText: 'EXPLORE WALL SYSTEMS',
-    ctaLink: '/catalogue',
-  },
-  {
-    id: 'surfaces',
-    pillar: 'SURFACES',
-    image: '/images/hero-surfaces.jpg',
-    imageMobile: '/images/hero-surfaces-mobile.jpg',
-    alt: 'Distinctive bookmatched marble surfaces, fine wood veneers and luxury textures',
-    eyebrow: [
-      { text: 'DOORS', active: false },
-      { text: 'WALL SOLUTIONS', active: false },
-      { text: 'SURFACES', active: true },
-    ],
-    title: 'Curated Textures<br />& Distinctive<br />Surface Materials',
-    desc: 'Bookmatched natural stone, fine architectural veneers and high-performance tactile surface materials curated for refined living spaces.',
-    ctaText: 'EXPLORE SURFACES',
-    ctaLink: '/catalogue',
-  }
-];
+import Layout from '../layouts/Layout.astro';
+import { getFeaturedProducts, getServices, getProjects, getHeroSlides } from '../lib/supabase';
+import { imgSrc } from '../data/originalData.js';
+
+const products = await getFeaturedProducts();
+const services = await getServices();
+const projects = await getProjects();
+const heroSlides = await getHeroSlides();
 ---
 
 <Layout 
@@ -86,10 +43,10 @@ const heroSlides = [
         {heroSlides.map((slide, i) => (
           <div class={`hero-slide-content ${i === 0 ? 'active' : ''}`} data-content-index={i}>
             <div class="hero-eyebrow">
-              {slide.eyebrow.map((item, idx) => (
+              {(slide.eyebrow || []).map((item, idx) => (
                 <>
                   <span class={item.active ? 'active-pillar' : ''}>{item.text}</span>
-                  {idx < slide.eyebrow.length - 1 && <span class="sep">|</span>}
+                  {idx < (slide.eyebrow || []).length - 1 && <span class="sep">|</span>}
                 </>
               ))}
             </div>
@@ -480,6 +437,41 @@ const heroSlides = [
       // Synchronize initial state
       syncPagination();
     }
+
+    // Toggle "All Products" in Selected Products section (shows 3 initially, reveals others on click)
+    const extraCards = document.querySelectorAll<HTMLElement>('.product-card-extra');
+    let productsExpanded = false;
+
+    function toggleAllProducts() {
+      productsExpanded = !productsExpanded;
+      extraCards.forEach((card) => {
+        if (productsExpanded) {
+          card.style.display = '';
+          card.classList.add('product-fade-in');
+        } else {
+          card.style.display = 'none';
+          card.classList.remove('product-fade-in');
+        }
+      });
+
+      const totalCount = extraCards.length + 3;
+      const headerText = document.getElementById('all-prod-header-text');
+      const headerArrow = document.getElementById('all-prod-header-arrow');
+      const footerText = document.getElementById('all-prod-footer-text');
+      const footerArrow = document.getElementById('all-prod-footer-arrow');
+
+      if (headerText) headerText.textContent = productsExpanded ? 'Show 3 only' : `All products (${totalCount})`;
+      if (headerArrow) headerArrow.innerHTML = productsExpanded ? '&uarr;' : '&darr;';
+      if (footerText) footerText.textContent = productsExpanded ? 'Show 3 Products' : `View All Products (${totalCount})`;
+      if (footerArrow) footerArrow.innerHTML = productsExpanded ? '&uarr;' : '&darr;';
+
+      if (!productsExpanded) {
+        document.querySelector('.selected-products-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    document.getElementById('toggle-all-products-header-btn')?.addEventListener('click', toggleAllProducts);
+    document.getElementById('toggle-all-products-footer-btn')?.addEventListener('click', toggleAllProducts);
   </script>
 
   <!-- Hero Bottom Features -->
@@ -515,15 +507,35 @@ const heroSlides = [
           <span class="eyebrow">01 / Selected products</span>
           <h2>Made to make <em class="italic">an impression.</em></h2>
         </div>
-        <a class="text-link" href="/catalogue">All materials <span class="arrow">↗</span></a>
+        <div style="display: flex; align-items: center; gap: 20px;">
+          {products.length > 3 && (
+            <button
+              type="button"
+              class="text-link"
+              id="toggle-all-products-header-btn"
+              style="background: transparent; border: none; padding: 0; font-family: inherit; font-size: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;"
+            >
+              <span id="all-prod-header-text">All products ({products.length})</span>
+              <span id="all-prod-header-arrow">&darr;</span>
+            </button>
+          )}
+          <a class="text-link" href="/catalogue">Catalogue <span class="arrow">↗</span></a>
+        </div>
       </div>
       <div class="home-products-wrapper">
         <div class="product-grid home-selected-grid gsap-stagger-parent" id="home-products-track" data-lenis-prevent>
           {products.map((p, idx) => (
-            <article class="product-card gsap-stagger-child" data-prod-index={idx}>
+            <article
+              class={`product-card gsap-stagger-child ${idx >= 3 ? 'product-card-extra' : ''}`}
+              data-prod-index={idx}
+              style={idx >= 3 ? "display: none;" : ""}
+            >
               <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
                 <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
-                <span class="on-image-tag">{p.category}</span>
+                <span class="on-image-tag">
+                  {p.category}
+                  {p.variants && p.variants.length > 1 ? ` • ${p.variants.length} Options` : ''}
+                </span>
                 <span class="image-arrow">↗</span>
               </a>
               <div class="product-info">
@@ -533,7 +545,7 @@ const heroSlides = [
                   <p>{p.short}</p>
                 </div>
                 <div class="product-price">
-                  <small>Sample price from</small>
+                  <small>{p.variants && p.variants.length > 1 ? `${p.variants.length} Options from` : 'Sample price from'}</small>
                   {p.price}
                 </div>
               </div>
@@ -541,14 +553,31 @@ const heroSlides = [
           ))}
         </div>
 
+        {products.length > 3 && (
+          <div style="text-align: center; margin-top: 36px;">
+            <button
+              type="button"
+              id="toggle-all-products-footer-btn"
+              class="btn"
+              style="padding: 12px 28px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid var(--walnut); background: transparent; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;"
+            >
+              <span id="all-prod-footer-text">View All Products ({products.length})</span>
+              <span id="all-prod-footer-arrow">&darr;</span>
+            </button>
+          </div>
+        )}
+
         <!-- Mobile Carousel Navigation Bar (Hidden on Desktop & Tablet) -->
         <div class="home-products-mobile-bar" aria-label="Selected products navigation">
           <div class="mobile-carousel-pagination" id="home-products-pagination">
-            <button type="button" class="carousel-step active" data-step="0" aria-label="View product 1">01</button>
-            <span class="carousel-dash" aria-hidden="true"></span>
-            <button type="button" class="carousel-step" data-step="1" aria-label="View product 2">02</button>
-            <span class="carousel-dash" aria-hidden="true"></span>
-            <button type="button" class="carousel-step" data-step="2" aria-label="View product 3">03</button>
+            {products.slice(0, 5).map((_, i) => (
+              <>
+                <button type="button" class={`carousel-step ${i === 0 ? 'active' : ''}`} data-step={i} aria-label={`View product ${i + 1}`}>
+                  {String(i + 1).padStart(2, '0')}
+                </button>
+                {i < Math.min(products.length, 5) - 1 && <span class="carousel-dash" aria-hidden="true"></span>}
+              </>
+            ))}
           </div>
           <div class="mobile-carousel-controls">
             <button type="button" class="carousel-arrow-btn prev" id="home-prod-prev" aria-label="Previous product" disabled>
@@ -615,7 +644,7 @@ const heroSlides = [
           <a class="project-card gsap-stagger-child" href={`/project/${p.id}`}>
             <div class="project-photo">
               <img src={imgSrc(p.image)} alt={`${p.name} architectural showcase`} loading="lazy" />
-              <span class="project-pill">{p.isDemo ? 'Sample concept' : 'Portfolio entry'}</span>
+              <span class="project-pill">{p.category}</span>
               <div class="project-overlay">
                 <span>{p.category}</span>
                 <h3>{p.name}</h3>
@@ -628,7 +657,6 @@ const heroSlides = [
           </a>
         ))}
       </div>
-      <p class="sample-caption">Portfolio imagery and project stories above are design examples. Replace with actual ROEL projects prior to public launch.</p>
     </div>
   </section>
 
@@ -679,3 +707,19 @@ const heroSlides = [
     </div>
   </section>
 </Layout>
+
+<style>
+  @keyframes roelCardFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .product-fade-in {
+    animation: roelCardFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+</style>
