@@ -482,13 +482,9 @@ const homeVideo = await getHomeVideo();
       const totalCount = extraCards.length + 3;
       const headerText = document.getElementById('all-prod-header-text');
       const headerArrow = document.getElementById('all-prod-header-arrow');
-      const footerText = document.getElementById('all-prod-footer-text');
-      const footerArrow = document.getElementById('all-prod-footer-arrow');
 
       if (headerText) headerText.textContent = productsExpanded ? 'Show 3 only' : `All products (${totalCount})`;
       if (headerArrow) headerArrow.innerHTML = productsExpanded ? '&uarr;' : '&darr;';
-      if (footerText) footerText.textContent = productsExpanded ? 'Show 3 Products' : `View All Products (${totalCount})`;
-      if (footerArrow) footerArrow.innerHTML = productsExpanded ? '&uarr;' : '&darr;';
 
       if (!productsExpanded) {
         document.querySelector('.selected-products-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -496,7 +492,6 @@ const homeVideo = await getHomeVideo();
     }
 
     document.getElementById('toggle-all-products-header-btn')?.addEventListener('click', toggleAllProducts);
-    document.getElementById('toggle-all-products-footer-btn')?.addEventListener('click', toggleAllProducts);
   </script>
 
   <!-- Hero Bottom Features -->
@@ -578,20 +573,6 @@ const homeVideo = await getHomeVideo();
           ))}
         </div>
 
-        {products.length > 3 && (
-          <div style="text-align: center; margin-top: 36px;">
-            <button
-              type="button"
-              id="toggle-all-products-footer-btn"
-              class="btn"
-              style="padding: 12px 28px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid var(--walnut); background: transparent; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;"
-            >
-              <span id="all-prod-footer-text">View All Products ({products.length})</span>
-              <span id="all-prod-footer-arrow">&darr;</span>
-            </button>
-          </div>
-        )}
-
         <!-- Mobile Carousel Navigation Bar (Hidden on Desktop & Tablet) -->
         <div class="home-products-mobile-bar" aria-label="Selected products navigation">
           <div class="mobile-carousel-pagination" id="home-products-pagination">
@@ -614,7 +595,6 @@ const homeVideo = await getHomeVideo();
           </div>
         </div>
       </div>
-      <p class="sample-caption">Design-stage sample product names, specifications and prices. Official ROEL products and quotations will be confirmed before launch.</p>
     </div>
   </section>
 
