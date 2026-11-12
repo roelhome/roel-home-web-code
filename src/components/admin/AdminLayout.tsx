@@ -6,6 +6,7 @@ import { ProductsManager } from './ProductsManager';
 import { CategoriesManager } from './CategoriesManager';
 import { ProjectsManager } from './ProjectsManager';
 import { HeroManager } from './HeroManager';
+import { HomeVideoManager } from './HomeVideoManager';
 import { ImageDropzone } from './ImageDropzone';
 import {
   Inbox,
@@ -20,10 +21,11 @@ import {
   Globe,
   PanelLeftClose,
   PanelLeftOpen,
-  Sparkles
+  Sparkles,
+  Film
 } from 'lucide-react';
 
-type TabKey = 'leads' | 'hero' | 'products' | 'categories' | 'projects' | 'media';
+type TabKey = 'leads' | 'hero' | 'video' | 'products' | 'categories' | 'projects' | 'media';
 
 interface NavItem {
   key: TabKey;
@@ -115,6 +117,12 @@ export const AdminLayout: React.FC = () => {
       label: 'Hero Banners',
       description: 'Homepage landscape slides & headings',
       icon: Sparkles
+    },
+    {
+      key: 'video',
+      label: 'Home Video',
+      description: 'Brand film, YouTube & 30MB R2 uploads',
+      icon: Film
     },
     {
       key: 'products',
@@ -643,6 +651,7 @@ export const AdminLayout: React.FC = () => {
         >
           {activeTab === 'leads' && <LeadsManager />}
           {activeTab === 'hero' && <HeroManager />}
+          {activeTab === 'video' && <HomeVideoManager />}
           {activeTab === 'products' && <ProductsManager />}
           {activeTab === 'categories' && <CategoriesManager />}
           {activeTab === 'projects' && <ProjectsManager />}

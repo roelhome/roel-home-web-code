@@ -10,10 +10,13 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/webp',
   'image/avif',
   'image/svg+xml',
-  'video/mp4'
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-m4v'
 ]);
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -40,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Unsupported file type: ${file.type}. Allowed: JPG, PNG, WEBP, AVIF, SVG, MP4`
+          error: `Unsupported file type: ${file.type}. Allowed: JPG, PNG, WEBP, AVIF, SVG, MP4, WEBM, MOV`
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
@@ -48,7 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (file.size > MAX_FILE_SIZE) {
       return new Response(
-        JSON.stringify({ success: false, error: 'File size exceeds maximum limit of 15MB' }),
+        JSON.stringify({ success: false, error: 'File size exceeds maximum limit of 30MB' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }

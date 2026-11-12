@@ -373,3 +373,132 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
   }
 }
 
+export interface HomeVideoData {
+  source_type: 'youtube' | 'upload';
+  url: string;
+  youtube_id?: string;
+  poster_url?: string;
+  title?: string;
+  subtitle?: string;
+  updated_at?: string;
+}
+
+export const defaultHomeVideo: HomeVideoData = {
+  source_type: 'upload',
+  url: '/videos/video.mp4',
+  poster_url: '/images/hero.webp',
+  title: 'A closer look.',
+  subtitle: '04 / Our design language'
+};
+
+export function extractYouTubeId(urlOrId: string): string | null {
+  if (!urlOrId) return null;
+  const trimmed = urlOrId.trim();
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const match = trimmed.match(regExp);
+  if (match && match[1]) {
+    return match[1];
+  }
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return null;
+}
+
+/**
+ * Fetch home video settings from Supabase site_settings
+ */
+export async function getHomeVideo(): Promise<HomeVideoData> {
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('key, value')
+      .in('key', ['home_video', 'hero_video_url']);
+
+    if (error || !data || data.length === 0) {
+      return defaultHomeVideo;
+    }
+
+    const homeVideoRow = data.find((r: any) => r.key === 'home_video');
+    if (homeVideoRow && homeVideoRow.value) {
+      const val = typeof homeVideoRow.value === 'string'
+        ? JSON.parse(homeVideoRow.value)
+        : homeVideoRow.value;
+      
+      const ytId = val.youtube_id || (val.source_type === 'youtube' ? extractYouTubeId(val.url) : undefined);
+      return {
+        source_type: val.source_type === 'youtube' ? 'youtube' : 'upload',
+        url: val.url || defaultHomeVideo.url,
+        youtube_id: ytId || undefined,
+        poster_url: val.poster_url || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : defaultHomeVideo.poster_url),
+        title: val.title || defaultHomeVideo.title,
+        subtitle: val.subtitle || defaultHomeVideo.subtitle,
+        updated_at: val.updated_at
+      };
+    }
+
+    // Fallback to legacy hero_video_url
+    const legacyRow = data.find((r: any) => r.key === 'hero_video_url');
+    if (legacyRow && legacyRow.value) {
+      const rawUrl = typeof legacyRow.value === 'string' ? legacyRow.value.replace(/^"|"$/g, '') : legacyRow.value;
+      const ytId = extractYouTubeId(rawUrl);
+      return {
+        source_type: ytId ? 'youtube' : 'upload',
+        url: rawUrl,
+        youtube_id: ytId || undefined,
+        poster_url: ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : defaultHomeVideo.poster_url,
+        title: defaultHomeVideo.title,
+        subtitle: defaultHomeVideo.subtitle
+      };
+    }
+
+    return defaultHomeVideo;
+  } catch (err) {
+    console.warn('Falling back to default home video:', err);
+    return defaultHomeVideo;
+  }
+}
+
+/**
+ * Update home video settings in Supabase site_settings
+ */
+export async function updateHomeVideo(settings: HomeVideoData): Promise<{ success: boolean; error?: string }> {
+  try {
+    const ytId = settings.source_type === 'youtube' ? extractYouTubeId(settings.url) : undefined;
+    const payload: HomeVideoData = {
+      source_type: settings.source_type,
+      url: settings.url.trim(),
+      youtube_id: ytId || undefined,
+      poster_url: settings.poster_url || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : undefined),
+      title: settings.title?.trim() || defaultHomeVideo.title,
+      subtitle: settings.subtitle?.trim() || defaultHomeVideo.subtitle,
+      updated_at: new Date().toISOString()
+    };
+
+    // Upsert home_video key
+    const { error: videoErr } = await supabase
+      .from('site_settings')
+      .upsert({
+        key: 'home_video',
+        value: payload,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+
+    if (videoErr) throw videoErr;
+
+    // Sync hero_video_url for backwards compatibility
+    await supabase
+      .from('site_settings')
+      .upsert({
+        key: 'hero_video_url',
+        value: payload.url,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error updating home video:', err);
+    return { success: false, error: err?.message || 'Failed to update video settings' };
+  }
+}
+

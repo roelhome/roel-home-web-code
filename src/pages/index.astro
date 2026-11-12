@@ -2,13 +2,14 @@
 export const prerender = false;
 
 import Layout from '../layouts/Layout.astro';
-import { getFeaturedProducts, getServices, getProjects, getHeroSlides } from '../lib/supabase';
+import { getFeaturedProducts, getServices, getProjects, getHeroSlides, getHomeVideo } from '../lib/supabase';
 import { imgSrc } from '../data/originalData.js';
 
 const products = await getFeaturedProducts();
 const services = await getServices();
 const projects = await getProjects();
 const heroSlides = await getHeroSlides();
+const homeVideo = await getHomeVideo();
 ---
 
 <Layout 
@@ -285,14 +286,38 @@ const heroSlides = await getHeroSlides();
     // Initial run
     startAutoPlay();
 
-    // Inline Brand Film playback controller
+    // Inline Brand Film playback controller (supports both HTML5 <video> and YouTube embeds)
     const filmFrame = document.getElementById('inline-film-container');
     const filmVideo = document.getElementById('inline-film-video') as HTMLVideoElement | null;
     const filmPlayBtn = document.getElementById('inline-film-play-btn');
     const watchTextBtn = document.getElementById('play-inline-film-btn');
+    const videoType = filmFrame?.getAttribute('data-video-type') || 'upload';
+    const youtubeId = filmFrame?.getAttribute('data-youtube-id') || '';
 
     function playInlineFilm() {
-      if (!filmVideo || !filmFrame) return;
+      if (!filmFrame) return;
+
+      if (videoType === 'youtube' && youtubeId) {
+        const playerSlot = document.getElementById('youtube-player-container');
+        if (playerSlot && !playerSlot.querySelector('iframe')) {
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
+          iframe.title = 'ROEL Visual Study Film';
+          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+          iframe.allowFullscreen = true;
+          iframe.style.width = '100%';
+          iframe.style.height = '100%';
+          iframe.style.border = '0';
+          iframe.style.display = 'block';
+
+          playerSlot.innerHTML = '';
+          playerSlot.appendChild(iframe);
+        }
+        filmFrame.classList.add('is-playing');
+        return;
+      }
+
+      if (!filmVideo) return;
 
       if (filmVideo.paused) {
         filmVideo.controls = true;
@@ -664,30 +689,55 @@ const heroSlides = await getHeroSlides();
   <section class="film-section">
     <div class="container film-layout">
       <div class="film-copy gsap-fade-up">
-        <span class="eyebrow" style="color:var(--champagne)">04 / Our design language</span>
-        <h2>A closer<br /><em class="italic">look.</em></h2>
+        <span class="eyebrow" style="color:var(--champagne)">{homeVideo.subtitle || "04 / Our design language"}</span>
+        {homeVideo.title && homeVideo.title !== 'A closer look.' ? (
+          <h2><Fragment set:html={homeVideo.title} /></h2>
+        ) : (
+          <h2>A closer<br /><em class="italic">look.</em></h2>
+        )}
         <p>A short visual study of surfaces, light and detail. Explore the atmosphere behind the ROEL approach.</p>
         <button type="button" class="text-link light" style="background:none;border-left:0;border-right:0;border-top:0;cursor:pointer" id="play-inline-film-btn" aria-label="Watch the visual study video">
           Watch the visual study <span class="arrow">↗</span>
         </button>
       </div>
-      <div class="film-frame" id="inline-film-container" tabindex="0" role="region" aria-label="ROEL visual concept film">
-        <video 
-          id="inline-film-video"
-          class="film-video"
-          src="/videos/video.mp4" 
-          poster="/images/hero.webp"
-          playsinline
-          webkit-playsinline
-          preload="metadata"
-          aria-label="ROEL architectural visual concept preview"
-        ></video>
+      <div 
+        class="film-frame" 
+        id="inline-film-container" 
+        tabindex="0" 
+        role="region" 
+        aria-label="ROEL visual concept film"
+        data-video-type={homeVideo.source_type}
+        data-youtube-id={homeVideo.youtube_id || ""}
+      >
+        {homeVideo.source_type === 'youtube' && homeVideo.youtube_id ? (
+          <>
+            <img 
+              id="inline-film-poster"
+              class="film-video film-poster" 
+              src={homeVideo.poster_url || `https://img.youtube.com/vi/${homeVideo.youtube_id}/maxresdefault.jpg`} 
+              alt="ROEL visual concept preview"
+              loading="lazy"
+            />
+            <div id="youtube-player-container" class="youtube-player-slot"></div>
+          </>
+        ) : (
+          <video 
+            id="inline-film-video"
+            class="film-video"
+            src={homeVideo.url || "/videos/video.mp4"} 
+            poster={homeVideo.poster_url || "/images/hero.webp"}
+            playsinline
+            webkit-playsinline
+            preload="metadata"
+            aria-label="ROEL architectural visual concept preview"
+          ></video>
+        )}
         <div class="film-play" id="inline-film-play-btn" role="button" tabindex="0" aria-label="Play ROEL visual concept film">
           <span class="film-play-circle">▶</span>
         </div>
         <div class="film-frame-bottom">
           <span>ROEL / VISUAL STUDY</span>
-          <span>00:08 &nbsp; · &nbsp; CONCEPT PREVIEW</span>
+          <span>{homeVideo.source_type === 'youtube' ? 'YOUTUBE &nbsp; · &nbsp; STREAMING' : '00:08 &nbsp; · &nbsp; CONCEPT PREVIEW'}</span>
         </div>
       </div>
     </div>
