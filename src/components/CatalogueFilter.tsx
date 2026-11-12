@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { imgSrc } from '../data/originalData.js';
 import { supabase, type CategoryItem } from '../lib/supabase';
 import { type Product } from '../data/products';

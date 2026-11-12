@@ -320,7 +320,7 @@ const heroSlides = await getHeroSlides();
       playInlineFilm();
     });
 
-    filmFrame?.addEventListener('click', (e) => {
+    filmFrame?.addEventListener('click', () => {
       // If clicking on the frame when not actively playing with native controls
       if (filmFrame && !filmFrame.classList.contains('is-playing')) {
         playInlineFilm();

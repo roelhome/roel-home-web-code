@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { products as defaultProducts, services as defaultServices, projects as defaultProjects } from '../data/originalData.js';
 import { supabase } from '../lib/supabase';
 
