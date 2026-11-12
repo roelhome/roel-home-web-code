@@ -6,7 +6,20 @@ import { initialProjects, type Project } from '../data/projects';
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://phjuttpvdcotdouwcmsg.supabase.co';
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoanV0dHB2ZGNvdGRvdXdjbXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxMTQ5NzgsImV4cCI6MjEwOTY5MDk3OH0.4HReX1sXvIpv19yVXKt9ijBdTAvsTEVSYwMgsmSjaac';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+const isBrowser = typeof window !== 'undefined';
+const hasWebSocket = typeof globalThis !== 'undefined' && 'WebSocket' in globalThis && globalThis.WebSocket !== undefined;
+
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: isBrowser,
+    autoRefreshToken: isBrowser,
+  },
+  ...(hasWebSocket ? {} : {
+    realtime: {
+      transport: class DummyWebSocket {}
+    }
+  })
+});
 
 export interface CategoryItem {
   id: string;
