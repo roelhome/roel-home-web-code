@@ -70,19 +70,32 @@ const allVariants = product.variants && Array.isArray(product.variants) ? produc
 const initialVariant = allVariants.find((v) => v.is_available !== false) || allVariants[0] || null;
 const initialVariantImages = initialVariant?.images && initialVariant.images.length > 0 ? initialVariant.images : null;
 
-const initialGallery: { src: string; alt: string }[] = initialVariantImages
-  ? initialVariantImages.map((src: string, idx: number) => ({
+// Build a complete, deduplicated gallery combining variant-specific photos, product gallery, and main product photo
+const rawGallerySources: string[] = [
+  ...(initialVariantImages || []),
+  ...(product.gallery && Array.isArray(product.gallery) ? product.gallery : []),
+  ...(product.image ? [product.image] : [])
+];
+
+const uniqueGallerySources: string[] = [];
+const seenSources = new Set<string>();
+for (const s of rawGallerySources) {
+  if (s && typeof s === 'string' && !seenSources.has(s.trim())) {
+    seenSources.add(s.trim());
+    uniqueGallerySources.push(s.trim());
+  }
+}
+
+const fallbackStaticGallery = productGalleries[product.id] || [
+  { src: imgSrc(product.image), alt: `${product.name} architectural detail` }
+];
+
+const initialGallery: { src: string; alt: string }[] = uniqueGallerySources.length > 0
+  ? uniqueGallerySources.map((src: string, idx: number) => ({
       src: imgSrc(src),
-      alt: `${product.name} - ${initialVariant?.name} finish ${idx + 1}`
+      alt: `${product.name} visual ${idx + 1}`
     }))
-  : (product.gallery && product.gallery.length > 0)
-  ? product.gallery.map((src: string, idx: number) => ({
-      src: imgSrc(src),
-      alt: `${product.name} gallery image ${idx + 1}`
-    }))
-  : productGalleries[product.id] || [
-      { src: imgSrc(product.image), alt: `${product.name} architectural detail` }
-    ];
+  : fallbackStaticGallery;
 
 const initialPrice = initialVariant?.price || product.price;
 const initialSku = initialVariant?.sku || product.sku;
@@ -269,6 +282,8 @@ const productSchema = {
           data-variants={JSON.stringify(allVariants)}
           data-base-price={product.price}
           data-base-sku={product.sku}
+          data-base-gallery={JSON.stringify(product.gallery || [])}
+          data-base-image={product.image || ''}
           data-product-name={product.name}
           data-initial-selections={JSON.stringify(initialSelectedOptions)}
         />
@@ -592,25 +607,47 @@ const productSchema = {
           quoteBtn.setAttribute('data-enquiry', `${productName} — ${combinedSummary} (${activeSku}) - ${formattedPrice}`);
         }
 
-        // 7. Update Images & Thumbs if matched variant has dedicated photos
-        if (matchedVariant?.images && Array.isArray(matchedVariant.images) && matchedVariant.images.length > 0) {
-          const firstImg = resolveImgSrc(matchedVariant.images[0]);
-          if (mainImg) {
+        // 7. Update Images & Thumbs (variant-specific photos prioritized + all product gallery photos)
+        const baseGallery = JSON.parse(matrixEl ? (matrixEl.getAttribute('data-base-gallery') || '[]') : '[]');
+        const baseMainImg = matrixEl ? (matrixEl.getAttribute('data-base-image') || '') : '';
+
+        const variantImgs = (matchedVariant?.images && Array.isArray(matchedVariant.images) && matchedVariant.images.length > 0)
+          ? matchedVariant.images
+          : [];
+
+        const combinedSources = [];
+        const seenSrc = new Set();
+        [...variantImgs, ...baseGallery, baseMainImg].forEach((s) => {
+          if (s && typeof s === 'string' && !seenSrc.has(s.trim())) {
+            seenSrc.add(s.trim());
+            combinedSources.push(s.trim());
+          }
+        });
+
+        if (combinedSources.length > 0) {
+          const targetMainSrc = variantImgs.length > 0
+            ? resolveImgSrc(variantImgs[0])
+            : resolveImgSrc(combinedSources[0]);
+
+          if (mainImg && targetMainSrc && mainImg.src !== targetMainSrc) {
             mainImg.style.opacity = '0.3';
+            mainImg.style.transform = 'scale(0.98)';
             setTimeout(() => {
-              mainImg.src = firstImg;
+              mainImg.src = targetMainSrc;
               mainImg.alt = `${productName} - ${combinedSummary}`;
               mainImg.style.opacity = '1';
+              mainImg.style.transform = 'scale(1)';
             }, 140);
           }
 
           if (thumbsContainer) {
             thumbsContainer.innerHTML = '';
-            matchedVariant.images.forEach((imgKey, idx) => {
+            combinedSources.forEach((imgKey, idx) => {
               const resolved = resolveImgSrc(imgKey);
+              const isMatch = targetMainSrc ? resolved === targetMainSrc : idx === 0;
               const b = document.createElement('button');
               b.type = 'button';
-              b.className = `pdp-thumb-btn ${idx === 0 ? 'active' : ''}`;
+              b.className = `pdp-thumb-btn ${isMatch ? 'active' : ''}`;
               b.setAttribute('data-img-src', resolved);
               b.setAttribute('data-img-alt', `${productName} - ${combinedSummary} view ${idx + 1}`);
               b.setAttribute('aria-label', `View photo ${idx + 1}`);

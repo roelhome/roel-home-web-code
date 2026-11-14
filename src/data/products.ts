@@ -905,7 +905,7 @@ export const initialProducts: Product[] = [
         "has_color": true,
         "is_available": true,
         "images": [
-          "/images/slat.webp"
+          "https://pub-e465cd37fbf24a1491b461e2ef65364e.r2.dev/products/roel-reference-home-mwg7zygk-1ytc.jpeg"
         ],
         "options": {
           "Size / Dimensions": "8 ft × 2 ft Modular Sheet",
@@ -956,7 +956,7 @@ export const initialProducts: Product[] = [
         "has_color": true,
         "is_available": true,
         "images": [
-          "/images/slat.webp"
+          "https://pub-e465cd37fbf24a1491b461e2ef65364e.r2.dev/products/roel-reference-home-mwg7zygk-1ytc.jpeg"
         ],
         "options": {
           "Size / Dimensions": "9.5 ft × 2 ft Full Height",
@@ -966,7 +966,8 @@ export const initialProducts: Product[] = [
     ],
     "gallery": [
       "/images/slat.webp",
-      "/images/living.webp"
+      "/images/living.webp",
+      "https://pub-e465cd37fbf24a1491b461e2ef65364e.r2.dev/products/roel-reference-home-mwg7zygk-1ytc.jpeg"
     ]
   },
   {
