@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="404 — Page Not Found | ROEL Home Solutions"
+  description="The architectural page you were looking for could not be found. Explore ROEL doors, wall solutions, and catalogue."
+>
+  <section class="section" style="min-height: 70vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px;">
+    <div class="container" style="max-width: 680px; margin: 0 auto;">
+      <span class="eyebrow" style="color: var(--walnut); letter-spacing: 0.25em;">404 / NOT FOUND</span>
+      <h1 class="serif" style="font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 300; margin: 20px 0; color: var(--ink); line-height: 1.15;">
+        Page <em class="italic" style="color: var(--walnut); font-style: italic;">not found.</em>
+      </h1>
+      <p style="color: var(--muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 36px;">
+        The space or architectural specification you are looking for may have been relocated, updated, or does not exist.
+      </p>
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <a href="/" class="btn" style="padding: 14px 32px; background: var(--walnut); color: #fff; border-radius: 2px; text-decoration: none; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase;">
+          Return Home
+        </a>
+        <a href="/catalogue" class="btn" style="padding: 14px 32px; border: 1px solid var(--walnut); color: var(--ink); background: transparent; border-radius: 2px; text-decoration: none; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase;">
+          Browse Catalogue &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>

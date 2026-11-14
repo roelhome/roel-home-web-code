@@ -43,6 +43,8 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
       setIsUploading(true);
       const newUrls: string[] = [];
 
+      const { data: { session } } = await supabase.auth.getSession();
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         setUploadProgress(`Uploading ${i + 1} of ${files.length} to Cloudflare R2...`);
@@ -54,6 +56,9 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
         try {
           const res = await fetch('/api/admin/upload', {
             method: 'POST',
+            headers: {
+              ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+            },
             body: formData
           });
 

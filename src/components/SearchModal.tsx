@@ -8,6 +8,19 @@ export default function SearchModal() {
   const [productsList, setProductsList] = useState<any[]>(defaultProducts);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch fresh published products from Supabase once on mount
+  useEffect(() => {
+    supabase
+      .from('products')
+      .select('*')
+      .eq('status', 'published')
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setProductsList(data);
+        }
+      });
+  }, []);
+
   useEffect(() => {
     // Open on search button click
     const handleTrigger = (e: MouseEvent) => {
@@ -33,17 +46,6 @@ export default function SearchModal() {
 
     document.addEventListener('click', handleTrigger);
     window.addEventListener('keydown', handleKeyDown);
-
-    // Fetch fresh published products from Supabase
-    supabase
-      .from('products')
-      .select('*')
-      .eq('status', 'published')
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setProductsList(data);
-        }
-      });
 
     return () => {
       document.removeEventListener('click', handleTrigger);

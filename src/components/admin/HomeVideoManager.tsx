@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
+  supabase,
   getHomeVideo,
   updateHomeVideo,
   extractYouTubeId,
@@ -112,8 +113,12 @@ export const HomeVideoManager: React.FC = () => {
       formData.append('file', file);
       formData.append('folder', 'videos');
 
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/admin/upload', {
         method: 'POST',
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+        },
         body: formData
       });
 
@@ -153,8 +158,12 @@ export const HomeVideoManager: React.FC = () => {
       formData.append('file', file);
       formData.append('folder', 'videos');
 
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/admin/upload', {
         method: 'POST',
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+        },
         body: formData
       });
 

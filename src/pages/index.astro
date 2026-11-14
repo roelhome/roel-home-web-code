@@ -513,7 +513,7 @@ const homeVideo = await getHomeVideo();
                 data-prod-index={idx}
               >
                 <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
-                  <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
+                  <img src={imgSrc(p.image)} alt={`${p.name} architectural detail`} loading="lazy" />
                   <span class="on-image-tag">
                     {p.category}
                     {p.variants && p.variants.length > 1 ? ` • ${p.variants.length} Options` : ''}
@@ -526,7 +526,7 @@ const homeVideo = await getHomeVideo();
                     {p.short && <p>{p.short}</p>}
                   </div>
                   <div class="product-price">
-                    <small>{p.variants && p.variants.length > 1 ? `${p.variants.length} Options from` : 'Sample price from'}</small>
+                    <small>{p.variants && p.variants.length > 1 ? `${p.variants.length} Options from` : 'Starting from'}</small>
                     <span>{p.price}</span>
                   </div>
                 </div>

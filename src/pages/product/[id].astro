@@ -81,7 +81,7 @@ const initialGallery: { src: string; alt: string }[] = initialVariantImages
       alt: `${product.name} gallery image ${idx + 1}`
     }))
   : productGalleries[product.id] || [
-      { src: imgSrc(product.image), alt: `${product.name} architectural material sample` }
+      { src: imgSrc(product.image), alt: `${product.name} architectural detail` }
     ];
 
 const initialPrice = initialVariant?.price || product.price;
@@ -386,7 +386,7 @@ const productSchema = {
           return (
             <article class="product-card">
               <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
-                <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
+                <img src={imgSrc(p.image)} alt={`${p.name} architectural detail`} loading="lazy" />
                 <span class="on-image-tag">{p.category}</span>
               </a>
               <div class="product-info">
@@ -396,7 +396,7 @@ const productSchema = {
                   {p.short && <p>{p.short}</p>}
                 </div>
                 <div class="product-price">
-                  <small>Sample price from</small>
+                  <small>Starting from</small>
                   <span>{formatPriceDisplay(p.price)}</span>
                 </div>
               </div>
