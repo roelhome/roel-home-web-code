@@ -462,36 +462,6 @@ const homeVideo = await getHomeVideo();
       // Synchronize initial state
       syncPagination();
     }
-
-    // Toggle "All Products" in Selected Products section (shows 3 initially, reveals others on click)
-    const extraCards = document.querySelectorAll<HTMLElement>('.product-card-extra');
-    let productsExpanded = false;
-
-    function toggleAllProducts() {
-      productsExpanded = !productsExpanded;
-      extraCards.forEach((card) => {
-        if (productsExpanded) {
-          card.style.display = '';
-          card.classList.add('product-fade-in');
-        } else {
-          card.style.display = 'none';
-          card.classList.remove('product-fade-in');
-        }
-      });
-
-      const totalCount = extraCards.length + 3;
-      const headerText = document.getElementById('all-prod-header-text');
-      const headerArrow = document.getElementById('all-prod-header-arrow');
-
-      if (headerText) headerText.textContent = productsExpanded ? 'Show 3 only' : `All products (${totalCount})`;
-      if (headerArrow) headerArrow.innerHTML = productsExpanded ? '&uarr;' : '&darr;';
-
-      if (!productsExpanded) {
-        document.querySelector('.selected-products-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-
-    document.getElementById('toggle-all-products-header-btn')?.addEventListener('click', toggleAllProducts);
   </script>
 
   <!-- Hero Bottom Features -->
@@ -527,18 +497,7 @@ const homeVideo = await getHomeVideo();
           <span class="eyebrow">01 / Selected products</span>
           <h2>Made to make <em class="italic">an impression.</em></h2>
         </div>
-        <div style="display: flex; align-items: center; gap: 20px;">
-          {products.length > 3 && (
-            <button
-              type="button"
-              class="text-link"
-              id="toggle-all-products-header-btn"
-              style="background: transparent; border: none; padding: 0; font-family: inherit; font-size: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;"
-            >
-              <span id="all-prod-header-text">All products ({products.length})</span>
-              <span id="all-prod-header-arrow">&darr;</span>
-            </button>
-          )}
+        <div>
           <a class="text-link" href="/catalogue">Catalogue <span class="arrow">↗</span></a>
         </div>
       </div>
@@ -550,9 +509,8 @@ const homeVideo = await getHomeVideo();
 
             return (
               <article
-                class={`product-card gsap-stagger-child ${idx >= 3 ? 'product-card-extra' : ''}`}
+                class="product-card gsap-stagger-child"
                 data-prod-index={idx}
-                style={idx >= 3 ? "display: none;" : ""}
               >
                 <a class="product-image" href={`/product/${p.id}`} aria-label={`View ${p.name}`}>
                   <img src={imgSrc(p.image)} alt={`${p.name} architectural material sample`} loading="lazy" />
@@ -771,19 +729,3 @@ const homeVideo = await getHomeVideo();
     </div>
   </section>
 </Layout>
-
-<style>
-  @keyframes roelCardFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(18px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  .product-fade-in {
-    animation: roelCardFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-</style>

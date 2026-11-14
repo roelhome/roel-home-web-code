@@ -33,17 +33,19 @@ export async function getCategories(): Promise<CategoryItem[]> {
 
     if (error || !data || data.length === 0) {
       return [
-        { id: 'Wall Solutions', name: 'Wall Solutions', order_index: 1 },
-        { id: 'Premium Doors', name: 'Premium Doors', order_index: 2 },
-        { id: 'Decorative Accents', name: 'Decorative Accents', order_index: 3 }
+        { id: 'WPC Doors', name: 'WPC Doors', order_index: 1 },
+        { id: 'Wooden Doors', name: 'Wooden Doors', order_index: 2 },
+        { id: 'Veneer Doors', name: 'Veneer Doors', order_index: 3 },
+        { id: 'Wall Solutions', name: 'Wall Solutions', order_index: 4 }
       ];
     }
     return data;
   } catch (err) {
     return [
-      { id: 'Wall Solutions', name: 'Wall Solutions', order_index: 1 },
-      { id: 'Premium Doors', name: 'Premium Doors', order_index: 2 },
-      { id: 'Decorative Accents', name: 'Decorative Accents', order_index: 3 }
+      { id: 'WPC Doors', name: 'WPC Doors', order_index: 1 },
+      { id: 'Wooden Doors', name: 'Wooden Doors', order_index: 2 },
+      { id: 'Veneer Doors', name: 'Veneer Doors', order_index: 3 },
+      { id: 'Wall Solutions', name: 'Wall Solutions', order_index: 4 }
     ];
   }
 }
