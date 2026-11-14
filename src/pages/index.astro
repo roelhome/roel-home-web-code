@@ -502,7 +502,7 @@ const homeVideo = await getHomeVideo();
         </div>
       </div>
       <div class="home-products-wrapper">
-        <div class="product-grid home-selected-grid gsap-stagger-parent" id="home-products-track" data-lenis-prevent>
+        <div class="product-grid home-selected-grid gsap-stagger-parent" id="home-products-track">
           {products.map((p, idx) => {
             const waMessage = `Hello ROEL Home Solutions, I would like to enquire about ${p.name} (${p.sku}). Please share details and a quotation.`;
             const waLink = `https://wa.me/918111899991?text=${encodeURIComponent(waMessage)}`;
