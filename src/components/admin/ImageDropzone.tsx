@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 interface ImageDropzoneProps {
   value?: string | string[];
