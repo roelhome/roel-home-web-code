@@ -188,17 +188,23 @@ const productSchema = {
 
         <!-- Thumbnail Selector -->
         <div class="pdp-thumbnails" id="pdp-thumbs-container" role="tablist" aria-label="Product viewpoints">
-          {initialGallery.map((g, idx) => (
-            <button 
-              type="button" 
-              class={`pdp-thumb-btn ${idx === 0 ? 'active' : ''}`}
-              data-img-src={g.src}
-              data-img-alt={g.alt}
-              aria-label={`View photo ${idx + 1}`}
-            >
-              <img src={g.src} alt={g.alt} loading="lazy" />
-            </button>
-          ))}
+          {initialGallery.map((g, idx) => {
+            const matchingVar = allVariants.find((v) =>
+              Array.isArray(v.images) && v.images.some((img) => imgSrc(img) === g.src || img === g.src)
+            );
+            return (
+              <button 
+                type="button" 
+                class={`pdp-thumb-btn ${idx === 0 ? 'active' : ''}`}
+                data-img-src={g.src}
+                data-img-alt={g.alt}
+                data-variant-id={matchingVar ? matchingVar.id : ''}
+                aria-label={`View photo ${idx + 1}`}
+              >
+                <img src={g.src} alt={g.alt} loading="lazy" />
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -488,6 +494,24 @@ const productSchema = {
       return '/images/' + key + '.webp';
     }
 
+    function isSameImage(urlA, urlB) {
+      if (!urlA || !urlB) return false;
+      const a = resolveImgSrc(urlA).trim();
+      const b = resolveImgSrc(urlB).trim();
+      if (a === b) return true;
+      try {
+        const pathA = new URL(a, window.location.origin).pathname;
+        const pathB = new URL(b, window.location.origin).pathname;
+        if (pathA === pathB) return true;
+        const fileA = pathA.split('/').pop();
+        const fileB = pathB.split('/').pop();
+        if (fileA && fileB && fileA === fileB) return true;
+      } catch (e) {
+        // fallback
+      }
+      return false;
+    }
+
     function formatPrice(priceVal) {
       if (!priceVal) return 'Specification On Request';
       const trimmed = String(priceVal).trim();
@@ -509,30 +533,6 @@ const productSchema = {
     const waBtn = document.getElementById('pdp-wa-btn');
     const barWaBtn = document.getElementById('pdp-bar-btn');
 
-    function attachThumbListeners() {
-      const thumbBtns = document.querySelectorAll('.pdp-thumb-btn');
-      thumbBtns.forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const newSrc = btn.getAttribute('data-img-src');
-          const newAlt = btn.getAttribute('data-img-alt');
-          if (mainImg && newSrc && mainImg.src !== newSrc) {
-            mainImg.style.opacity = '0.3';
-            mainImg.style.transform = 'scale(0.98)';
-            setTimeout(() => {
-              mainImg.src = newSrc;
-              if (newAlt) mainImg.alt = newAlt;
-              mainImg.style.opacity = '1';
-              mainImg.style.transform = 'scale(1)';
-            }, 140);
-            thumbBtns.forEach((b) => b.classList.remove('active'));
-            btn.classList.add('active');
-          }
-        });
-      });
-    }
-
-    attachThumbListeners();
-
     // Multi-Dimensional Combinations Resolver
     const matrixEl = document.getElementById('pdp-matrix-data');
     let variantsMatrix = [];
@@ -547,7 +547,193 @@ const productSchema = {
       }
     }
 
-    // Query both architectural pills and circular swatches
+    // Helper: Find matching variant by image URL
+    function findVariantByImage(src) {
+      if (!src || !variantsMatrix || variantsMatrix.length === 0) return null;
+
+      const matches = variantsMatrix.filter((v) =>
+        Array.isArray(v.images) && v.images.some((img) => isSameImage(img, src))
+      );
+
+      if (matches.length === 0) return null;
+      if (matches.length === 1) return matches[0];
+
+      // Prefer a variant that matches current dimension selections
+      const currentMatch = matches.find((v) => {
+        if (v.options && Object.keys(v.options).length > 0) {
+          return Object.entries(currentSelections).every(([dim, val]) => v.options[dim] === val);
+        }
+        return false;
+      }) || matches.find((v) => {
+        if (v.options && Object.keys(v.options).length > 0) {
+          return Object.entries(currentSelections).some(([dim, val]) => v.options[dim] === val);
+        }
+        return false;
+      });
+
+      return currentMatch || matches[0];
+    }
+
+    // Helper: Apply a variant's commercial attributes to the DOM
+    function applyVariant(matchedVariant, shouldRebuildThumbs) {
+      if (!matchedVariant) return;
+
+      // 1. Update selections and activate corresponding buttons
+      if (matchedVariant.options && typeof matchedVariant.options === 'object') {
+        Object.entries(matchedVariant.options).forEach(([dim, val]) => {
+          currentSelections[dim] = val;
+
+          // Highlight matching buttons in DOM
+          document.querySelectorAll(`button[data-option-dim="${dim}"]`).forEach((b) => {
+            if (b.getAttribute('data-option-val') === val) {
+              b.classList.add('active');
+            } else {
+              b.classList.remove('active');
+            }
+          });
+
+          // Update active label in header
+          const activeLabel = document.querySelector(`[data-dim-active-label="${dim}"]`);
+          if (activeLabel) activeLabel.textContent = val;
+        });
+      }
+
+      // 2. Format & Update Price Display
+      const combinedSummary = Object.values(currentSelections).join(' / ') || matchedVariant.name || '';
+      const rawPrice = matchedVariant.price || (matrixEl ? matrixEl.getAttribute('data-base-price') : '') || '';
+      const activeSku = matchedVariant.sku || (matrixEl ? matrixEl.getAttribute('data-base-sku') : '') || '';
+      const isAvail = matchedVariant.is_available !== false;
+      const formattedPrice = formatPrice(rawPrice);
+
+      if (priceDisplay) {
+        priceDisplay.textContent = isAvail ? formattedPrice : 'Out of Specification';
+      }
+      if (barPriceDisplay) {
+        barPriceDisplay.textContent = isAvail ? formattedPrice : 'Unavailable';
+      }
+      if (skuDisplay && activeSku) {
+        skuDisplay.textContent = activeSku;
+      }
+
+      // 3. Update WhatsApp Enquiry Links
+      const waText = isAvail
+        ? `Hello ROEL Home Solutions, I would like to enquire about ${productName} — ${combinedSummary} (${activeSku}) priced at ${formattedPrice}. Please share details and dimension options.`
+        : `Hello ROEL Home Solutions, I would like to check custom availability for ${productName} — ${combinedSummary} (${activeSku}).`;
+      const waUrl = 'https://wa.me/918111899991?text=' + encodeURIComponent(waText);
+      if (waBtn) waBtn.setAttribute('href', waUrl);
+      if (barWaBtn) barWaBtn.setAttribute('href', waUrl);
+
+      // 4. Update Consultation Quote Button
+      const quoteBtn = document.querySelector('.pdp-btn-consult');
+      if (quoteBtn) {
+        quoteBtn.setAttribute('data-enquiry', `${productName} — ${combinedSummary} (${activeSku}) - ${formattedPrice}`);
+      }
+
+      // 5. Update Thumbs container if requested (e.g. from option click)
+      if (shouldRebuildThumbs) {
+        updateGalleryForVariant(matchedVariant, combinedSummary);
+      }
+    }
+
+    // Helper: Update gallery images and thumbnails for a selected variant
+    function updateGalleryForVariant(matchedVariant, combinedSummary) {
+      const baseGallery = JSON.parse(matrixEl ? (matrixEl.getAttribute('data-base-gallery') || '[]') : '[]');
+      const baseMainImg = matrixEl ? (matrixEl.getAttribute('data-base-image') || '') : '';
+
+      const variantImgs = (matchedVariant?.images && Array.isArray(matchedVariant.images) && matchedVariant.images.length > 0)
+        ? matchedVariant.images
+        : [];
+
+      const combinedSources = [];
+      const seenSrc = new Set();
+      [...variantImgs, ...baseGallery, baseMainImg].forEach((s) => {
+        if (s && typeof s === 'string' && !seenSrc.has(s.trim())) {
+          seenSrc.add(s.trim());
+          combinedSources.push(s.trim());
+        }
+      });
+
+      if (combinedSources.length > 0) {
+        const targetMainSrc = variantImgs.length > 0
+          ? resolveImgSrc(variantImgs[0])
+          : resolveImgSrc(combinedSources[0]);
+
+        if (mainImg && targetMainSrc && mainImg.src !== targetMainSrc) {
+          mainImg.style.opacity = '0.3';
+          mainImg.style.transform = 'scale(0.98)';
+          setTimeout(() => {
+            mainImg.src = targetMainSrc;
+            mainImg.alt = `${productName} - ${combinedSummary}`;
+            mainImg.style.opacity = '1';
+            mainImg.style.transform = 'scale(1)';
+          }, 140);
+        }
+
+        if (thumbsContainer) {
+          thumbsContainer.innerHTML = '';
+          combinedSources.forEach((imgKey, idx) => {
+            const resolved = resolveImgSrc(imgKey);
+            const isMatch = targetMainSrc ? resolved === targetMainSrc : idx === 0;
+            const matchingVar = variantsMatrix.find((v) =>
+              Array.isArray(v.images) && v.images.some((img) => isSameImage(img, resolved))
+            );
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = `pdp-thumb-btn ${isMatch ? 'active' : ''}`;
+            b.setAttribute('data-img-src', resolved);
+            b.setAttribute('data-img-alt', `${productName} - ${combinedSummary} view ${idx + 1}`);
+            b.setAttribute('data-variant-id', matchingVar ? matchingVar.id : '');
+            b.setAttribute('aria-label', `View photo ${idx + 1}`);
+            b.innerHTML = `<img src="${resolved}" alt="${productName} photo ${idx + 1}" loading="lazy" />`;
+            thumbsContainer.appendChild(b);
+          });
+          attachThumbListeners();
+        }
+      }
+    }
+
+    // Attach listeners to thumbnails
+    function attachThumbListeners() {
+      const thumbBtns = document.querySelectorAll('.pdp-thumb-btn');
+      thumbBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const newSrc = btn.getAttribute('data-img-src');
+          const newAlt = btn.getAttribute('data-img-alt');
+          const varId = btn.getAttribute('data-variant-id');
+
+          // 1. Crossfade main photo
+          if (mainImg && newSrc && mainImg.src !== newSrc) {
+            mainImg.style.opacity = '0.3';
+            mainImg.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+              mainImg.src = newSrc;
+              if (newAlt) mainImg.alt = newAlt;
+              mainImg.style.opacity = '1';
+              mainImg.style.transform = 'scale(1)';
+            }, 140);
+          }
+
+          // 2. Mark this thumb active
+          thumbBtns.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          // 3. Resolve matching variant and update Price & Options!
+          let matchedVariant = varId ? variantsMatrix.find((v) => v.id === varId) : null;
+          if (!matchedVariant) {
+            matchedVariant = findVariantByImage(newSrc);
+          }
+
+          if (matchedVariant) {
+            // Apply price, active option pills, swatches, and enquiry links
+            applyVariant(matchedVariant, false);
+          }
+        });
+      });
+    }
+
+    attachThumbListeners();
+
+    // Query option dimension buttons (architectural pills & circular swatches)
     const optionButtons = document.querySelectorAll('button[data-option-dim]');
 
     optionButtons.forEach((btn) => {
@@ -555,107 +741,19 @@ const productSchema = {
         const dim = btn.getAttribute('data-option-dim') || '';
         const val = btn.getAttribute('data-option-val') || '';
 
-        // 1. Update selection state for this dimension
+        // Update selection state for this dimension
         currentSelections[dim] = val;
 
-        // 2. Highlight clicked button in its dimension group
-        document.querySelectorAll(`button[data-option-dim="${dim}"]`).forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // 3. Update active label in header
-        const activeLabel = document.querySelector(`[data-dim-active-label="${dim}"]`);
-        if (activeLabel) activeLabel.textContent = val;
-
-        // 4. Resolve matching variant combination from matrix
+        // Resolve matching variant combination from matrix
         const matchedVariant = variantsMatrix.find((v) => {
           if (v.options && Object.keys(v.options).length > 0) {
             return Object.entries(currentSelections).every(([k, expectedVal]) => v.options[k] === expectedVal);
           }
-          // Fallback matching by name
           return Object.values(currentSelections).every((expectedVal) => (v.name || '').includes(expectedVal));
         });
 
-        const combinedSummary = Object.values(currentSelections).join(' / ') || val;
-        const rawPrice = matchedVariant?.price || (matrixEl ? matrixEl.getAttribute('data-base-price') : '') || '';
-        const activeSku = matchedVariant?.sku || (matrixEl ? matrixEl.getAttribute('data-base-sku') : '') || '';
-        const isAvail = matchedVariant ? (matchedVariant.is_available !== false) : true;
-
-        const formattedPrice = formatPrice(rawPrice);
-
-        // 5. Update price display
-        if (priceDisplay) {
-          priceDisplay.textContent = isAvail ? formattedPrice : 'Out of Specification';
-        }
-        if (barPriceDisplay) {
-          barPriceDisplay.textContent = isAvail ? formattedPrice : 'Unavailable';
-        }
-        if (skuDisplay && activeSku) {
-          skuDisplay.textContent = activeSku;
-        }
-
-        // 6. Update WhatsApp Enquiry Links
-        const waText = isAvail
-          ? `Hello ROEL Home Solutions, I would like to enquire about ${productName} — ${combinedSummary} (${activeSku}) priced at ${formattedPrice}. Please share details and dimension options.`
-          : `Hello ROEL Home Solutions, I would like to check custom availability for ${productName} — ${combinedSummary} (${activeSku}).`;
-        const waUrl = 'https://wa.me/918111899991?text=' + encodeURIComponent(waText);
-        if (waBtn) waBtn.setAttribute('href', waUrl);
-        if (barWaBtn) barWaBtn.setAttribute('href', waUrl);
-
-        // Update consultation button
-        const quoteBtn = document.querySelector('.pdp-btn-consult');
-        if (quoteBtn) {
-          quoteBtn.setAttribute('data-enquiry', `${productName} — ${combinedSummary} (${activeSku}) - ${formattedPrice}`);
-        }
-
-        // 7. Update Images & Thumbs (variant-specific photos prioritized + all product gallery photos)
-        const baseGallery = JSON.parse(matrixEl ? (matrixEl.getAttribute('data-base-gallery') || '[]') : '[]');
-        const baseMainImg = matrixEl ? (matrixEl.getAttribute('data-base-image') || '') : '';
-
-        const variantImgs = (matchedVariant?.images && Array.isArray(matchedVariant.images) && matchedVariant.images.length > 0)
-          ? matchedVariant.images
-          : [];
-
-        const combinedSources = [];
-        const seenSrc = new Set();
-        [...variantImgs, ...baseGallery, baseMainImg].forEach((s) => {
-          if (s && typeof s === 'string' && !seenSrc.has(s.trim())) {
-            seenSrc.add(s.trim());
-            combinedSources.push(s.trim());
-          }
-        });
-
-        if (combinedSources.length > 0) {
-          const targetMainSrc = variantImgs.length > 0
-            ? resolveImgSrc(variantImgs[0])
-            : resolveImgSrc(combinedSources[0]);
-
-          if (mainImg && targetMainSrc && mainImg.src !== targetMainSrc) {
-            mainImg.style.opacity = '0.3';
-            mainImg.style.transform = 'scale(0.98)';
-            setTimeout(() => {
-              mainImg.src = targetMainSrc;
-              mainImg.alt = `${productName} - ${combinedSummary}`;
-              mainImg.style.opacity = '1';
-              mainImg.style.transform = 'scale(1)';
-            }, 140);
-          }
-
-          if (thumbsContainer) {
-            thumbsContainer.innerHTML = '';
-            combinedSources.forEach((imgKey, idx) => {
-              const resolved = resolveImgSrc(imgKey);
-              const isMatch = targetMainSrc ? resolved === targetMainSrc : idx === 0;
-              const b = document.createElement('button');
-              b.type = 'button';
-              b.className = `pdp-thumb-btn ${isMatch ? 'active' : ''}`;
-              b.setAttribute('data-img-src', resolved);
-              b.setAttribute('data-img-alt', `${productName} - ${combinedSummary} view ${idx + 1}`);
-              b.setAttribute('aria-label', `View photo ${idx + 1}`);
-              b.innerHTML = `<img src="${resolved}" alt="${productName} photo ${idx + 1}" loading="lazy" />`;
-              thumbsContainer.appendChild(b);
-            });
-            attachThumbListeners();
-          }
+        if (matchedVariant) {
+          applyVariant(matchedVariant, true);
         }
       });
     });
