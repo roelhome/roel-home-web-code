@@ -504,3 +504,190 @@ export async function updateHomeVideo(settings: HomeVideoData): Promise<{ succes
   }
 }
 
+export interface PopupFormField {
+  id: string;
+  name: string;
+  label: string;
+  type: 'text' | 'tel' | 'email' | 'number' | 'select' | 'textarea';
+  placeholder?: string;
+  required: boolean;
+  enabled: boolean;
+  options?: string[];
+  order_index: number;
+  is_system?: boolean;
+}
+
+export interface PopupSettings {
+  // Global & Behavioral Settings
+  is_active: boolean;
+  auto_popup_enabled: boolean;
+  auto_popup_delay: number;
+  trigger_scope: 'homepage' | 'all';
+  show_once_per_session: boolean;
+
+  // Header & Content
+  eyebrow: string;
+  title_prefix: string;
+  title_highlight: string;
+  subtitle: string;
+
+  // Buttons & Labels
+  submit_btn_text: string;
+  submitting_btn_text: string;
+  footnote: string;
+  dismiss_text: string;
+  show_dismiss_link: boolean;
+
+  // Direct Call
+  show_call_footer: boolean;
+  call_prompt_text: string;
+  phone_number: string;
+
+  // WhatsApp Integration
+  whatsapp_enabled: boolean;
+  whatsapp_number: string;
+  success_message: string;
+
+  // Form Fields
+  fields: PopupFormField[];
+
+  updated_at?: string;
+}
+
+export const defaultPopupSettings: PopupSettings = {
+  is_active: true,
+  auto_popup_enabled: true,
+  auto_popup_delay: 3,
+  trigger_scope: 'homepage',
+  show_once_per_session: true,
+
+  eyebrow: 'Architectural Consultation',
+  title_prefix: 'Tell us about',
+  title_highlight: 'your space.',
+  subtitle: 'Connect directly with our Kochi design specialists for distinctive doors, wall solutions, and curated surface materials.',
+
+  submit_btn_text: 'Request Consultation & Connect',
+  submitting_btn_text: 'Connecting with ROEL specialists...',
+  footnote: 'Records your requirements with ROEL Home Solutions and connects you directly on WhatsApp.',
+  dismiss_text: 'Explore the collection on my own first →',
+  show_dismiss_link: true,
+
+  show_call_footer: true,
+  call_prompt_text: 'Prefer to call?',
+  phone_number: '+91 81118 99991',
+
+  whatsapp_enabled: true,
+  whatsapp_number: '918111899991',
+  success_message: 'Enquiry registered! Opening WhatsApp to connect directly with our Kochi team...',
+
+  fields: [
+    {
+      id: 'field_name',
+      name: 'name',
+      label: 'Your name',
+      type: 'text',
+      placeholder: 'Full name',
+      required: true,
+      enabled: true,
+      order_index: 1,
+      is_system: true
+    },
+    {
+      id: 'field_phone',
+      name: 'phone',
+      label: 'Phone number',
+      type: 'tel',
+      placeholder: '+91 (WhatsApp preferred)',
+      required: true,
+      enabled: true,
+      order_index: 2,
+      is_system: true
+    },
+    {
+      id: 'field_location',
+      name: 'location',
+      label: 'City / Location',
+      type: 'text',
+      placeholder: 'e.g. Kochi, Calicut, Bangalore',
+      required: false,
+      enabled: true,
+      order_index: 3,
+      is_system: false
+    },
+    {
+      id: 'field_interest',
+      name: 'interest',
+      label: "I'm looking for",
+      type: 'select',
+      placeholder: 'Select a project category',
+      required: false,
+      enabled: true,
+      options: [
+        'Distinctive Doors & Entrance Systems',
+        'Acoustic & Fluted Wall Solutions',
+        'Curated Stone & Veneer Surfaces',
+        'Complete Space Consultation',
+        'Project Material Supply',
+        'Other Project Enquiry'
+      ],
+      order_index: 4,
+      is_system: false
+    }
+  ]
+};
+
+/**
+ * Fetch popup form settings from Supabase site_settings
+ */
+export async function getPopupSettings(): Promise<PopupSettings> {
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'popup_settings')
+      .maybeSingle();
+
+    if (error || !data || !data.value) {
+      return defaultPopupSettings;
+    }
+
+    const val = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+
+    return {
+      ...defaultPopupSettings,
+      ...val,
+      fields: Array.isArray(val.fields) && val.fields.length > 0 ? val.fields : defaultPopupSettings.fields
+    };
+  } catch (err) {
+    console.warn('Falling back to default popup settings:', err);
+    return defaultPopupSettings;
+  }
+}
+
+/**
+ * Update popup form settings in Supabase site_settings
+ */
+export async function updatePopupSettings(settings: PopupSettings): Promise<{ success: boolean; error?: string }> {
+  try {
+    const payload: PopupSettings = {
+      ...settings,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert({
+        key: 'popup_settings',
+        value: payload,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error updating popup settings:', err);
+    return { success: false, error: err?.message || 'Failed to update popup settings' };
+  }
+}
+
+

@@ -81,6 +81,23 @@ export const ProductsManager: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Supabase Realtime WebSocket subscription for live updates across admin sessions
+    const channel = supabase
+      .channel('realtime:admin_products')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          // Live sync products list when database changes, without reloading the page
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleStartCreate = () => {
@@ -146,8 +163,32 @@ export const ProductsManager: React.FC = () => {
       }
     }
 
+    // Merge existing product.image, product.gallery, and variant images into unified gallery
+    const combinedGallery: string[] = [];
+    const seen = new Set<string>();
+
+    const addImg = (url?: string) => {
+      if (!url || typeof url !== 'string') return;
+      const trimmed = url.trim();
+      if (!trimmed || trimmed === '/images/slat.webp') return;
+      if (!seen.has(trimmed)) {
+        seen.add(trimmed);
+        combinedGallery.push(trimmed);
+      }
+    };
+
+    addImg(prod.image);
+    (prod.gallery || []).forEach(addImg);
+    (prod.variants || []).forEach((v) => (v.images || []).forEach(addImg));
+
+    const primaryImg = (prod.image && prod.image !== '/images/slat.webp')
+      ? prod.image
+      : (combinedGallery[0] || prod.image || '');
+
     setEditingProduct({
       ...prod,
+      image: primaryImg,
+      gallery: combinedGallery,
       options: initialOptions
     });
   };
@@ -1183,8 +1224,8 @@ export const ProductsManager: React.FC = () => {
                               />
                             </div>
 
-                            {/* Photos Button */}
-                            <div style={{ paddingTop: '16px' }}>
+                            {/* Photos Button with Mini Thumbnails Strip */}
+                            <div style={{ paddingTop: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                               <button
                                 type="button"
                                 onClick={() => togglePhotos(v.id || String(vIdx))}
@@ -1206,20 +1247,211 @@ export const ProductsManager: React.FC = () => {
                                 <Camera style={{ width: '13px', height: '13px' }} />
                                 Photos ({v.images?.length || 0})
                               </button>
+
+                              {/* Mini Thumbnails Strip for Instant Visual Feedback */}
+                              {v.images && v.images.length > 0 && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  {v.images.slice(0, 3).map((thumbUrl, thumbIdx) => (
+                                    <img
+                                      key={thumbIdx}
+                                      src={thumbUrl}
+                                      alt="Variant preview"
+                                      style={{
+                                        width: '28px',
+                                        height: '28px',
+                                        objectFit: 'cover',
+                                        borderRadius: '2px',
+                                        border: '1px solid rgba(118,89,65,0.25)'
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/images/slat.webp';
+                                      }}
+                                    />
+                                  ))}
+                                  {v.images.length > 3 && (
+                                    <span style={{ fontSize: '10px', fontWeight: 700, color: '#806957' }}>
+                                      +{v.images.length - 3}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          {/* Dedicated Cloudflare R2 Dropzone for this combination */}
+                          {/* Gallery-Based Photo Selector for this combination */}
                           {isPhotosOpen && (
-                            <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(118,89,65,0.15)' }}>
-                              <ImageDropzone
-                                multiple
-                                folder={`variants/${(v.sku || 'v').toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                                value={v.images}
-                                onChange={(imgs) => updateVariantRow(vIdx, { images: imgs })}
-                                label={`Cloudflare R2 Photos for "${v.name}" (${v.images?.length || 0})`}
-                                hint="Photos specific to this exact combination (e.g. Wooden in Red color). Uploads to Cloudflare R2."
-                              />
+                            <div
+                              style={{
+                                marginTop: '14px',
+                                paddingTop: '16px',
+                                borderTop: '1px solid rgba(118,89,65,0.15)',
+                                backgroundColor: '#FAF7F2',
+                                padding: '16px',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                <div>
+                                  <h4 style={{ margin: '0 0 2px', fontSize: '13px', fontWeight: 700, color: '#19120C' }}>
+                                    Select Photos for "{v.name}" from Gallery
+                                  </h4>
+                                  <span style={{ fontSize: '11.5px', color: '#806957' }}>
+                                    Click any image to link or unlink it with this variant combination. Updates live instantly.
+                                  </span>
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: (v.images && v.images.length > 0) ? '#166534' : '#765941',
+                                    backgroundColor: (v.images && v.images.length > 0) ? '#dcfce7' : 'rgba(118,89,65,0.1)',
+                                    padding: '4px 8px',
+                                    borderRadius: '3px'
+                                  }}
+                                >
+                                  {v.images?.length || 0} Linked Photo{(v.images?.length || 0) === 1 ? '' : 's'}
+                                </span>
+                              </div>
+
+                              {/* Clickable Gallery Picker Grid */}
+                              {(!editingProduct.gallery || editingProduct.gallery.length === 0) ? (
+                                <div style={{ padding: '16px', textAlign: 'center', backgroundColor: '#fff', border: '1px dashed rgba(118,89,65,0.3)', borderRadius: '4px', marginBottom: '14px' }}>
+                                  <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#806957' }}>
+                                    No photos in product gallery yet. Upload photos below to add them to both the product gallery and this variant.
+                                  </p>
+                                </div>
+                              ) : (
+                                <div
+                                  style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                                    gap: '10px',
+                                    marginBottom: '16px'
+                                  }}
+                                >
+                                  {editingProduct.gallery.map((galleryUrl, gIdx) => {
+                                    const isSelected = (v.images || []).includes(galleryUrl);
+                                    return (
+                                      <div
+                                        key={`${galleryUrl}-${gIdx}`}
+                                        onClick={() => {
+                                          const current = v.images || [];
+                                          const next = isSelected
+                                            ? current.filter((u) => u !== galleryUrl)
+                                            : [...current, galleryUrl];
+                                          updateVariantRow(vIdx, { images: next });
+                                        }}
+                                        style={{
+                                          position: 'relative',
+                                          height: '90px',
+                                          borderRadius: '4px',
+                                          overflow: 'hidden',
+                                          cursor: 'pointer',
+                                          border: isSelected ? '2.5px solid #166534' : '1px solid rgba(118,89,65,0.25)',
+                                          backgroundColor: '#19120C',
+                                          boxShadow: isSelected ? '0 0 0 1px #166534, 0 4px 10px rgba(22,101,52,0.25)' : 'none',
+                                          transition: 'all 0.15s ease',
+                                          opacity: isSelected ? 1 : 0.72
+                                        }}
+                                      >
+                                        <img
+                                          src={galleryUrl}
+                                          alt={`Product photo ${gIdx + 1}`}
+                                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = '/images/slat.webp';
+                                          }}
+                                        />
+
+                                        {/* Checked Indicator */}
+                                        {isSelected ? (
+                                          <div
+                                            style={{
+                                              position: 'absolute',
+                                              top: '4px',
+                                              right: '4px',
+                                              width: '20px',
+                                              height: '20px',
+                                              borderRadius: '50%',
+                                              backgroundColor: '#166534',
+                                              color: '#fff',
+                                              display: 'grid',
+                                              placeItems: 'center',
+                                              boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+                                              zIndex: 2
+                                            }}
+                                          >
+                                            <Check style={{ width: '12px', height: '12px' }} />
+                                          </div>
+                                        ) : (
+                                          <div
+                                            style={{
+                                              position: 'absolute',
+                                              top: '4px',
+                                              right: '4px',
+                                              width: '18px',
+                                              height: '18px',
+                                              borderRadius: '50%',
+                                              backgroundColor: 'rgba(25,18,12,0.6)',
+                                              border: '1px solid rgba(240,226,206,0.6)',
+                                              zIndex: 2
+                                            }}
+                                          />
+                                        )}
+
+                                        {isSelected && (
+                                          <div
+                                            style={{
+                                              position: 'absolute',
+                                              bottom: '2px',
+                                              left: '2px',
+                                              right: '2px',
+                                              backgroundColor: 'rgba(22,101,52,0.92)',
+                                              color: '#fff',
+                                              fontSize: '8.5px',
+                                              fontWeight: 700,
+                                              padding: '2px 4px',
+                                              borderRadius: '2px',
+                                              textAlign: 'center',
+                                              textTransform: 'uppercase',
+                                              zIndex: 2
+                                            }}
+                                          >
+                                            Linked
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Quick-Upload New Photo (Adds to both Gallery and Variant!) */}
+                              <div style={{ borderTop: '1px solid rgba(118,89,65,0.12)', paddingTop: '12px' }}>
+                                <ImageDropzone
+                                  multiple
+                                  folder={`products`}
+                                  value={[]}
+                                  onChange={(newUrls) => {
+                                    const currentGallery = editingProduct.gallery || [];
+                                    const combinedGallery = [...currentGallery];
+                                    const currentVariantImages = [...(v.images || [])];
+
+                                    (newUrls as string[]).forEach((url) => {
+                                      if (url && !combinedGallery.includes(url)) combinedGallery.push(url);
+                                      if (url && !currentVariantImages.includes(url)) currentVariantImages.push(url);
+                                    });
+
+                                    setEditingProduct({
+                                      ...editingProduct,
+                                      gallery: combinedGallery
+                                    });
+                                    updateVariantRow(vIdx, { images: currentVariantImages });
+                                  }}
+                                  label={`Upload New Photo for "${v.name}"`}
+                                  hint="Uploads once to Cloudflare R2, automatically adds to the unified gallery, and links to this variant."
+                                />
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1298,34 +1530,219 @@ export const ProductsManager: React.FC = () => {
 
           {/* Right Column: Media, Status & Visibility */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Primary Image Upload Card */}
+            {/* Unified Product Media Gallery & Thumbnail Selection Card */}
             <div style={{ backgroundColor: '#fff', padding: '24px', border: '1px solid rgba(118,89,65,0.2)' }}>
-              <h3 style={{ fontFamily: 'RoelSerif, Georgia, serif', fontSize: '18px', margin: '0 0 16px', color: '#19120C' }}>
-                Primary Thumbnail Image
-              </h3>
-              <ImageDropzone
-                multiple={false}
-                folder="products"
-                value={editingProduct.image || ''}
-                onChange={(url) => setEditingProduct({ ...editingProduct, image: url })}
-                label="Product Main Photo"
-                hint="Used as catalogue card thumbnail and default display."
-              />
-            </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+                <div>
+                  <h3 style={{ fontFamily: 'RoelSerif, Georgia, serif', fontSize: '18px', margin: '0 0 4px', color: '#19120C' }}>
+                    Product Media Gallery & Thumbnail
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#806957', lineHeight: 1.5 }}>
+                    All photos for this product are stored here. Click <strong style={{ color: '#D49E58' }}>★ Set as Primary</strong> on any photo to choose the catalogue card thumbnail.
+                  </p>
+                </div>
+              </div>
 
-            {/* General Product Gallery Card */}
-            <div style={{ backgroundColor: '#fff', padding: '24px', border: '1px solid rgba(118,89,65,0.2)' }}>
-              <h3 style={{ fontFamily: 'RoelSerif, Georgia, serif', fontSize: '18px', margin: '0 0 16px', color: '#19120C' }}>
-                Overall Lifestyle & Installation Gallery
-              </h3>
+              {/* Single Upload Dropzone */}
               <ImageDropzone
                 multiple
                 folder="products"
-                value={editingProduct.gallery || []}
-                onChange={(urls) => setEditingProduct({ ...editingProduct, gallery: urls })}
-                label="Additional Gallery Photos"
-                hint="Drop in situ shots, close-up textures or project installs."
+                value={[]}
+                onChange={(newUrls) => {
+                  const currentGallery = editingProduct.gallery || [];
+                  const combined = [...currentGallery];
+                  (newUrls as string[]).forEach((url) => {
+                    if (url && !combined.includes(url)) combined.push(url);
+                  });
+                  const primaryImg = editingProduct.image && combined.includes(editingProduct.image)
+                    ? editingProduct.image
+                    : (combined[0] || '');
+                  setEditingProduct({
+                    ...editingProduct,
+                    image: primaryImg,
+                    gallery: combined
+                  });
+                }}
+                label="Add Photos to Gallery"
+                hint="Drop product photos, texture details or install shots (JPG, PNG, WebP up to 15MB)."
               />
+
+              {/* Unified Gallery Visual Grid */}
+              {editingProduct.gallery && editingProduct.gallery.length > 0 && (
+                <div style={{ marginTop: '18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: '#5b4130' }}>
+                      Gallery Photos ({editingProduct.gallery.length})
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#806957' }}>
+                      {editingProduct.image ? '1 Primary Thumbnail Active' : 'Select a primary thumbnail'}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
+                      gap: '10px'
+                    }}
+                  >
+                    {editingProduct.gallery.map((url, imgIdx) => {
+                      const isPrimary = (editingProduct.image === url) || (!editingProduct.image && imgIdx === 0);
+
+                      // Count how many variants use this image
+                      const usedInVariants = (editingProduct.variants || []).filter((v) =>
+                        v.images && v.images.includes(url)
+                      );
+
+                      return (
+                        <div
+                          key={`${url}-${imgIdx}`}
+                          style={{
+                            position: 'relative',
+                            height: '105px',
+                            borderRadius: '4px',
+                            overflow: 'hidden',
+                            border: `2px solid ${isPrimary ? '#D49E58' : 'rgba(118,89,65,0.25)'}`,
+                            backgroundColor: '#19120C',
+                            boxShadow: isPrimary ? '0 0 0 1px #D49E58, 0 4px 12px rgba(212,158,88,0.25)' : 'none',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <img
+                            src={url}
+                            alt={`Gallery photo ${imgIdx + 1}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/images/slat.webp';
+                            }}
+                          />
+
+                          {/* Primary Badge or Set as Primary Button */}
+                          {isPrimary ? (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                left: '4px',
+                                backgroundColor: '#D49E58',
+                                color: '#19120C',
+                                fontSize: '8.5px',
+                                fontWeight: 800,
+                                padding: '3px 6px',
+                                borderRadius: '2px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+                                zIndex: 2
+                              }}
+                            >
+                              <Star style={{ width: '10px', height: '10px', fill: '#19120C' }} />
+                              Primary
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setEditingProduct({ ...editingProduct, image: url })}
+                              title="Click to set as primary catalogue thumbnail"
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                left: '4px',
+                                backgroundColor: 'rgba(25,18,12,0.8)',
+                                color: '#F0E2CE',
+                                border: '1px solid rgba(229,191,140,0.5)',
+                                fontSize: '8.5px',
+                                fontWeight: 700,
+                                padding: '2px 5px',
+                                borderRadius: '2px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                zIndex: 2
+                              }}
+                            >
+                              <Star style={{ width: '9px', height: '9px' }} />
+                              Set Primary
+                            </button>
+                          )}
+
+                          {/* Delete from gallery */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedGallery = (editingProduct.gallery || []).filter((u) => u !== url);
+                              const updatedPrimary = editingProduct.image === url
+                                ? (updatedGallery[0] || '')
+                                : editingProduct.image;
+
+                              const updatedVariants = (editingProduct.variants || []).map((v) => ({
+                                ...v,
+                                images: (v.images || []).filter((u) => u !== url)
+                              }));
+
+                              setEditingProduct({
+                                ...editingProduct,
+                                gallery: updatedGallery,
+                                image: updatedPrimary,
+                                variants: updatedVariants
+                              });
+                            }}
+                            title="Remove photo from gallery"
+                            style={{
+                              position: 'absolute',
+                              top: '4px',
+                              right: '4px',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'rgba(25,18,12,0.85)',
+                              color: '#fff',
+                              border: 'none',
+                              display: 'grid',
+                              placeItems: 'center',
+                              cursor: 'pointer',
+                              padding: 0,
+                              zIndex: 2
+                            }}
+                          >
+                            <Trash2 style={{ width: '11px', height: '11px' }} />
+                          </button>
+
+                          {/* Variant usage indicator */}
+                          {usedInVariants.length > 0 && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: '4px',
+                                left: '4px',
+                                right: '4px',
+                                backgroundColor: 'rgba(25,18,12,0.85)',
+                                color: '#E5BF8C',
+                                fontSize: '8px',
+                                fontWeight: 600,
+                                padding: '2px 4px',
+                                borderRadius: '2px',
+                                textAlign: 'center',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                zIndex: 2
+                              }}
+                              title={`Used in: ${usedInVariants.map((v) => v.name).join(', ')}`}
+                            >
+                              In {usedInVariants.length} variant{usedInVariants.length > 1 ? 's' : ''}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Visibility & Status Card */}

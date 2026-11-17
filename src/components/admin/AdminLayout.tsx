@@ -7,6 +7,7 @@ import { CategoriesManager } from './CategoriesManager';
 import { ProjectsManager } from './ProjectsManager';
 import { HeroManager } from './HeroManager';
 import { HomeVideoManager } from './HomeVideoManager';
+import { PopupManager } from './PopupManager';
 import { ImageDropzone } from './ImageDropzone';
 import {
   Inbox,
@@ -22,10 +23,11 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
-  Film
+  Film,
+  SlidersHorizontal
 } from 'lucide-react';
 
-type TabKey = 'leads' | 'hero' | 'video' | 'products' | 'categories' | 'projects' | 'media';
+type TabKey = 'leads' | 'hero' | 'video' | 'popup' | 'products' | 'categories' | 'projects' | 'media';
 
 interface NavItem {
   key: TabKey;
@@ -123,6 +125,12 @@ export const AdminLayout: React.FC = () => {
       label: 'Home Video',
       description: 'Brand film, YouTube & 30MB R2 uploads',
       icon: Film
+    },
+    {
+      key: 'popup',
+      label: 'Pop-up Form',
+      description: 'Consultation modal & custom fields',
+      icon: SlidersHorizontal
     },
     {
       key: 'products',
@@ -652,6 +660,7 @@ export const AdminLayout: React.FC = () => {
           {activeTab === 'leads' && <LeadsManager />}
           {activeTab === 'hero' && <HeroManager />}
           {activeTab === 'video' && <HomeVideoManager />}
+          {activeTab === 'popup' && <PopupManager />}
           {activeTab === 'products' && <ProductsManager />}
           {activeTab === 'categories' && <CategoriesManager />}
           {activeTab === 'projects' && <ProjectsManager />}
