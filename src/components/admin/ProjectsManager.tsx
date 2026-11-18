@@ -24,6 +24,7 @@ export interface AdminProject {
   category: string;
   year: string;
   image_url: string;
+  gallery?: string[];
   summary: string;
   story: string;
   is_demo: boolean;
@@ -63,7 +64,12 @@ export const ProjectsManager: React.FC = () => {
 
       if (fetchErr) throw fetchErr;
 
-      setProjects(data || []);
+      setProjects(
+        (data || []).map((p: any) => ({
+          ...p,
+          gallery: Array.isArray(p.gallery) ? p.gallery : []
+        }))
+      );
     } catch (err: any) {
       console.error('Fetch projects error:', err);
       setError(err?.message || 'Failed to load projects from Supabase');
@@ -124,6 +130,7 @@ export const ProjectsManager: React.FC = () => {
       category: 'Residential',
       year: currentYear,
       image_url: '/images/living.webp',
+      gallery: [],
       summary: '',
       story: '',
       is_demo: false,
@@ -135,7 +142,10 @@ export const ProjectsManager: React.FC = () => {
 
   // Open modal for editing existing project
   const handleEdit = (proj: AdminProject) => {
-    setEditingProject({ ...proj });
+    setEditingProject({
+      ...proj,
+      gallery: Array.isArray(proj.gallery) ? [...proj.gallery] : []
+    });
     setIsNew(false);
     setError(null);
   };
@@ -147,7 +157,8 @@ export const ProjectsManager: React.FC = () => {
       ...proj,
       id: newId,
       name: `${proj.name} (Copy)`,
-      order_index: (proj.order_index || 0) + 1
+      order_index: (proj.order_index || 0) + 1,
+      gallery: Array.isArray(proj.gallery) ? [...proj.gallery] : []
     };
 
     setSaving(true);
@@ -227,6 +238,7 @@ export const ProjectsManager: React.FC = () => {
       category: editingProject.category.trim() || 'Residential',
       year: editingProject.year.trim() || new Date().getFullYear().toString(),
       image_url: editingProject.image_url.trim(),
+      gallery: Array.isArray(editingProject.gallery) ? editingProject.gallery.filter(Boolean) : [],
       summary: editingProject.summary.trim(),
       story: editingProject.story.trim(),
       is_demo: !!editingProject.is_demo,
@@ -581,6 +593,29 @@ export const ProjectsManager: React.FC = () => {
                       {p.category}
                     </span>
                   </div>
+
+                  {/* Gallery Photos Count Badge */}
+                  {p.gallery && p.gallery.length > 0 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        left: '12px',
+                        backgroundColor: 'rgba(25,18,12,0.85)',
+                        color: '#E5BF8C',
+                        padding: '3px 8px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        borderRadius: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      📷 {p.gallery.length} Photos
+                    </div>
+                  )}
 
                   {/* Year Tag */}
                   <div
@@ -997,13 +1032,56 @@ export const ProjectsManager: React.FC = () => {
               {/* Showcase Cover Image */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#765941', marginBottom: '6px' }}>
-                  Project Showcase Photo (Cloudflare R2 or URL) *
+                  Project Showcase Cover Photo (Cloudflare R2 or URL) *
                 </label>
                 <ImageDropzone
                   value={editingProject.image_url}
                   onChange={(url) => setEditingProject((prev) => prev ? { ...prev, image_url: url } : null)}
                   folder="projects"
-                  hint="Drag & drop project photography or click to upload directly to Cloudflare R2 bucket"
+                  hint="Drag & drop primary project showcase photo or click to browse (Cloudflare R2)"
+                />
+              </div>
+
+              {/* Multiple Gallery Photos */}
+              <div
+                style={{
+                  marginBottom: '24px',
+                  padding: '16px',
+                  backgroundColor: '#FAF7F2',
+                  border: '1px solid rgba(118,89,65,0.2)',
+                  borderRadius: '2px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#765941', margin: 0 }}>
+                      Project Gallery Photos (Multiple Images for Gallery Modal)
+                    </label>
+                    <span style={{ fontSize: '12px', color: '#806957' }}>
+                      These photos will only be visible when the user clicks the "Project Gallery" button on this project.
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#D49E58',
+                      backgroundColor: 'rgba(212,158,88,0.15)',
+                      padding: '2px 8px',
+                      borderRadius: '10px'
+                    }}
+                  >
+                    {editingProject.gallery?.length || 0} Gallery Photos
+                  </span>
+                </div>
+
+                <ImageDropzone
+                  multiple
+                  value={editingProject.gallery || []}
+                  onChange={(urls) => setEditingProject((prev) => prev ? { ...prev, gallery: urls } : null)}
+                  folder="projects"
+                  label="Upload Multiple Project Gallery Photos"
+                  hint="Drag & drop multiple high-res photos here or click to browse (these appear in the Project Gallery lightbox)"
                 />
               </div>
 

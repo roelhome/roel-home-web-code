@@ -5,6 +5,7 @@ import { LeadsManager } from './LeadsManager';
 import { ProductsManager } from './ProductsManager';
 import { CategoriesManager } from './CategoriesManager';
 import { ProjectsManager } from './ProjectsManager';
+import { ServicesManager } from './ServicesManager';
 import { HeroManager } from './HeroManager';
 import { HomeVideoManager } from './HomeVideoManager';
 import { PopupManager } from './PopupManager';
@@ -24,10 +25,11 @@ import {
   PanelLeftOpen,
   Sparkles,
   Film,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Briefcase
 } from 'lucide-react';
 
-type TabKey = 'leads' | 'hero' | 'video' | 'popup' | 'products' | 'categories' | 'projects' | 'media';
+type TabKey = 'leads' | 'hero' | 'video' | 'popup' | 'products' | 'categories' | 'projects' | 'services' | 'media';
 
 interface NavItem {
   key: TabKey;
@@ -149,6 +151,12 @@ export const AdminLayout: React.FC = () => {
       label: 'Projects & Spaces',
       description: 'Architectural portfolio CRUD',
       icon: Building2
+    },
+    {
+      key: 'services',
+      label: 'Services & Practice',
+      description: 'Consultation & design workflow CRUD',
+      icon: Briefcase
     },
     {
       key: 'media',
@@ -664,6 +672,7 @@ export const AdminLayout: React.FC = () => {
           {activeTab === 'products' && <ProductsManager />}
           {activeTab === 'categories' && <CategoriesManager />}
           {activeTab === 'projects' && <ProjectsManager />}
+          {activeTab === 'services' && <ServicesManager />}
           {activeTab === 'media' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ backgroundColor: '#fff', padding: '28px', border: '1px solid rgba(118,89,65,0.2)' }}>

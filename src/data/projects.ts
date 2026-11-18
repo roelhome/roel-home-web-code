@@ -5,6 +5,7 @@ export interface Project {
   category: string;
   year: string;
   image: string;
+  gallery?: string[];
   summary: string;
   story: string;
   isDemo?: boolean;

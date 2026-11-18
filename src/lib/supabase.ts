@@ -55,20 +55,26 @@ export async function getCategories(): Promise<CategoryItem[]> {
  */
 export async function getProducts(): Promise<Product[]> {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, categories] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false }),
+      getCategories()
+    ]);
 
     if (error || !data || data.length === 0) {
       return initialProducts;
     }
 
+    const catMap = new Map(categories.map((c) => [c.id, c.name]));
+
     return data.map((item: any) => ({
       id: item.id,
       sku: item.sku,
-      category: item.category_id || 'Architectural Material',
+      category: catMap.get(item.category_id) || item.category_id || 'Architectural Material',
+      category_id: item.category_id,
       name: item.name,
       short: item.short_desc || '',
       description: item.description || '',
@@ -116,11 +122,14 @@ export async function getFeaturedProducts(): Promise<Product[]> {
  */
 export async function getProductById(id: string): Promise<Product | undefined> {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const [{ data, error }, categories] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle(),
+      getCategories()
+    ]);
 
     if (error || !data) {
       // Fallback to local
@@ -128,10 +137,13 @@ export async function getProductById(id: string): Promise<Product | undefined> {
       return products.find((p) => p.id === id);
     }
 
+    const catMap = new Map(categories.map((c) => [c.id, c.name]));
+
     return {
       id: data.id,
       sku: data.sku,
-      category: data.category_id || 'Architectural Material',
+      category: catMap.get(data.category_id) || data.category_id || 'Architectural Material',
+      category_id: data.category_id,
       name: data.name,
       short: data.short_desc || '',
       description: data.description || '',
@@ -165,6 +177,21 @@ export async function getProductById(id: string): Promise<Product | undefined> {
   }
 }
 
+const DEFAULT_STEP_TITLES = ['Understand', 'Explore', 'Refine', 'Plan', 'Coordinate', 'Deliver', 'Execute'];
+
+export function normalizeServiceStep(step: any, index: number): { title: string; description: string } {
+  if (typeof step === 'object' && step !== null) {
+    return {
+      title: step.title || step.heading || DEFAULT_STEP_TITLES[index] || `Step 0${index + 1}`,
+      description: step.description || step.text || ''
+    };
+  }
+  return {
+    title: DEFAULT_STEP_TITLES[index] || `Step 0${index + 1}`,
+    description: typeof step === 'string' ? step : ''
+  };
+}
+
 /**
  * Fetch all services
  */
@@ -176,7 +203,10 @@ export async function getServices(): Promise<Service[]> {
       .order('order_index', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      return initialServices;
+      return initialServices.map((s, idx) => ({
+        ...s,
+        items: Array.isArray(s.items) ? s.items.map(normalizeServiceStep) : []
+      }));
     }
 
     return data.map((item: any) => ({
@@ -187,11 +217,49 @@ export async function getServices(): Promise<Service[]> {
       summary: item.summary || '',
       description: item.description || '',
       image: item.image_url || '/images/living.webp',
-      items: Array.isArray(item.items) ? item.items : []
+      items: Array.isArray(item.items) ? item.items.map(normalizeServiceStep) : [],
+      order_index: item.order_index ?? 1
     }));
   } catch (err) {
     console.warn('Falling back to static services:', err);
-    return initialServices;
+    return initialServices.map((s, idx) => ({
+      ...s,
+      items: Array.isArray(s.items) ? s.items.map(normalizeServiceStep) : []
+    }));
+  }
+}
+
+/**
+ * Fetch a single service by ID
+ */
+export async function getServiceById(id: string): Promise<Service | undefined> {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) {
+      const allServices = await getServices();
+      return allServices.find((s) => s.id === id);
+    }
+
+    return {
+      id: data.id,
+      number: data.number,
+      name: data.name,
+      tag: data.tag || '',
+      summary: data.summary || '',
+      description: data.description || '',
+      image: data.image_url || '/images/living.webp',
+      items: Array.isArray(data.items) ? data.items.map(normalizeServiceStep) : [],
+      order_index: data.order_index ?? 1
+    };
+  } catch (err) {
+    console.warn('Falling back to local services for id:', id, err);
+    const allServices = await getServices();
+    return allServices.find((s) => s.id === id);
   }
 }
 
@@ -216,6 +284,7 @@ export async function getProjects(): Promise<Project[]> {
       category: item.category || 'Residential',
       year: item.year || '2026',
       image: item.image_url || '/images/living.webp',
+      gallery: Array.isArray(item.gallery) ? item.gallery : [],
       summary: item.summary || '',
       story: item.story || '',
       isDemo: item.is_demo
@@ -249,6 +318,7 @@ export async function getProjectById(id: string): Promise<Project | undefined> {
       category: data.category || 'Residential',
       year: data.year || '2026',
       image: data.image_url || '/images/living.webp',
+      gallery: Array.isArray(data.gallery) ? data.gallery : [],
       summary: data.summary || '',
       story: data.story || '',
       isDemo: data.is_demo

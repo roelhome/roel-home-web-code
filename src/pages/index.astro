@@ -618,7 +618,7 @@ const homeVideo = await getHomeVideo();
           <a class="service-row gsap-stagger-child" href={`/service/${s.id}`}>
             <span class="service-index">{s.number}</span>
             <h3>{s.name}</h3>
-            <p>{s.summary}</p>
+            <p>{s.summary || s.description}</p>
             <span class="round-arrow">↗</span>
           </a>
         ))}

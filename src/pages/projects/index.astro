@@ -29,6 +29,11 @@ const projects = await getProjects();
             <div class="project-photo">
               <img src={imgSrc(p.image)} alt={`${p.name} architectural showcase`} loading="lazy" />
               <span class="project-pill">{p.category}</span>
+              {p.gallery && p.gallery.length > 0 && (
+                <span class="project-pill" style="left:15px;right:auto;background:rgba(25,18,12,0.85);color:#E5BF8C;border:1px solid rgba(229,191,140,0.3)">
+                  📷 {p.gallery.length + 1} Photos
+                </span>
+              )}
               <div class="project-overlay">
                 <span>{p.category}</span>
                 <h3>{p.name}</h3>

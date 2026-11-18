@@ -1,3 +1,8 @@
+export interface ServiceStep {
+  title: string;
+  description: string;
+}
+
 export interface Service {
   id: string;
   number: string;
@@ -6,7 +11,8 @@ export interface Service {
   summary: string;
   description: string;
   image: string;
-  items: string[];
+  items: (string | ServiceStep)[];
+  order_index?: number;
 }
 
 export const initialServices: Service[] = [

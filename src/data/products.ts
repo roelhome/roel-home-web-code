@@ -29,6 +29,7 @@ export interface Product {
   id: string;
   sku: string;
   category: string;
+  category_id?: string;
   name: string;
   short: string;
   description: string;

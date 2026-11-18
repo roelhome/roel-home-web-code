@@ -3,6 +3,7 @@ export const prerender = false;
 
 import Layout from '../../layouts/Layout.astro';
 import { getProjectById, getProjects } from '../../lib/supabase';
+import { ProjectGalleryModal } from '../../components/ProjectGalleryModal';
 import { imgSrc, waUrl } from '../../data/originalData.js';
 
 const { id } = Astro.params;
@@ -41,7 +42,18 @@ const whatsappLink = waUrl(`Hello ROEL, I viewed ${project.name} on your website
   </section>
 
   <div class="container project-detail-photo">
-    <img src={imgSrc(project.image)} alt={`${project.name} project showcase`} />
+    <ProjectGalleryModal 
+      client:load 
+      project={{
+        id: project.id,
+        name: project.name,
+        location: project.location,
+        category: project.category,
+        year: project.year,
+        image: imgSrc(project.image),
+        gallery: (project.gallery || []).map(imgSrc)
+      }} 
+    />
   </div>
 
   <section class="container project-story">

@@ -1,18 +1,19 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { services, imgSrc, waUrl } from '../../data/originalData.js';
+export const prerender = false;
 
-export async function getStaticPaths() {
-  return services.map((service) => ({
-    params: { id: service.id },
-    props: { service, allServices: services },
-  }));
+import Layout from '../../layouts/Layout.astro';
+import { getServiceById } from '../../lib/supabase';
+import { imgSrc, waUrl } from '../../data/originalData.js';
+
+const { id } = Astro.params;
+const service = id ? await getServiceById(id) : undefined;
+
+if (!service) {
+  return Astro.redirect('/services');
 }
 
-const { service } = Astro.props;
-
 const whatsappLink = waUrl(`Hello ROEL, I am interested in your ${service.name} service. Please contact me to discuss my requirement.`);
-const stepTitles = ['Understand', 'Explore', 'Refine', 'Plan'];
+const stepTitles = ['Understand', 'Explore', 'Refine', 'Plan', 'Coordinate', 'Deliver', 'Execute'];
 ---
 
 <Layout 
@@ -30,7 +31,12 @@ const stepTitles = ['Understand', 'Explore', 'Refine', 'Plan'];
     <div class="copy">
       <span class="eyebrow" style="color:var(--champagne)">Service / {service.number}</span>
       <h1>{service.name}</h1>
-      <p>{service.description}</p>
+      {service.summary && service.description && service.summary !== service.description && (
+        <p style="font-size: 15px; color: var(--champagne); line-height: 1.7; margin-bottom: 12px; font-weight: 500;">
+          {service.summary}
+        </p>
+      )}
+      <p>{service.description || service.summary}</p>
       <div style="margin-top:30px">
         <a class="btn gold" href={whatsappLink} target="_blank" rel="noopener noreferrer">
           Discuss on WhatsApp <span class="arrow">↗</span>
@@ -52,15 +58,19 @@ const stepTitles = ['Understand', 'Explore', 'Refine', 'Plan'];
       </button>
     </div>
     <div>
-      {service.items.map((x, i) => (
-        <div class="step">
-          <strong>0{i + 1}</strong>
-          <div>
-            <h3>{stepTitles[i] || `Step 0${i + 1}`}</h3>
-            <p>{x}</p>
+      {service.items.map((x: any, i: number) => {
+        const title = typeof x === 'object' && x !== null ? x.title : (stepTitles[i] || `Step 0${i + 1}`);
+        const description = typeof x === 'object' && x !== null ? x.description : String(x || '');
+        return (
+          <div class="step">
+            <strong>0{i + 1}</strong>
+            <div>
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </section>
 

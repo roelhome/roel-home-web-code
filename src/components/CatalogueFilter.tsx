@@ -39,12 +39,15 @@ export default function CatalogueFilter({
             .order('order_index', { ascending: true })
         ]);
 
+        const catMap = new Map((catData || []).map((c: any) => [c.id, c.name]));
+
         if (prodData && prodData.length > 0) {
           setProducts(
             prodData.map((item: any) => ({
               id: item.id,
               sku: item.sku,
-              category: item.category_id || 'Architectural Material',
+              category: catMap.get(item.category_id) || item.category_id || 'Architectural Material',
+              category_id: item.category_id,
               name: item.name,
               short: item.short_desc || '',
               description: item.description || '',
@@ -71,6 +74,10 @@ export default function CatalogueFilter({
     fetchFreshData();
   }, []);
 
+  // Create quick lookup maps for category ID <-> Name
+  const catIdToNameMap = new Map(categories.map((c) => [c.id, c.name]));
+  const catNameToIdMap = new Map(categories.map((c) => [c.name, c.id]));
+
   // Build category list: "All" + all category names
   const categoryNames = [
     'All',
@@ -86,7 +93,18 @@ export default function CatalogueFilter({
   const filtered =
     selectedCategory === 'All'
       ? products
-      : products.filter((p) => p.category === selectedCategory);
+      : products.filter((p) => {
+          const pCatName = catIdToNameMap.get(p.category_id || p.category) || p.category;
+          const pCatId = p.category_id || catNameToIdMap.get(p.category) || p.category;
+          const selectedId = catNameToIdMap.get(selectedCategory) || selectedCategory;
+
+          return (
+            p.category === selectedCategory ||
+            pCatName === selectedCategory ||
+            pCatId === selectedId ||
+            p.category_id === selectedId
+          );
+        });
 
   return (
     <div className="container">

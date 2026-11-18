@@ -1,6 +1,11 @@
 ---
+export const prerender = false;
+
 import Layout from '../../layouts/Layout.astro';
-import { services, imgSrc } from '../../data/originalData.js';
+import { getServices } from '../../lib/supabase';
+import { imgSrc } from '../../data/originalData.js';
+
+const services = await getServices();
 ---
 
 <Layout 
@@ -12,7 +17,7 @@ import { services, imgSrc } from '../../data/originalData.js';
       <span class="eyebrow">Our practice</span>
       <h1>Care in <em>every detail.</em></h1>
       <p>The best outcomes come from the right conversations, decisions and materials at the right time.</p>
-      <div class="page-count">03</div>
+      <div class="page-count">{String(services.length).padStart(2, '0')}</div>
     </div>
   </section>
 
@@ -24,7 +29,7 @@ import { services, imgSrc } from '../../data/originalData.js';
           <div>
             <span class="eyebrow">{s.number} / {s.tag}</span>
             <h2>{s.name}</h2>
-            <p>{s.description}</p>
+            <p>{s.summary || s.description}</p>
             <a class="text-link" href={`/service/${s.id}`}>Explore this service <span class="arrow">↗</span></a>
           </div>
         </article>
