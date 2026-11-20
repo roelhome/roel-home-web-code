@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { initialProducts, type Product } from '../data/products';
 import { initialServices, type Service } from '../data/services';
 import { initialProjects, type Project } from '../data/projects';
+import { initialBlogs, type Blog } from '../data/blogs';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://phjuttpvdcotdouwcmsg.supabase.co';
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoanV0dHB2ZGNvdGRvdXdjbXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxMTQ5NzgsImV4cCI6MjEwOTY5MDk3OH0.4HReX1sXvIpv19yVXKt9ijBdTAvsTEVSYwMgsmSjaac';
@@ -758,6 +759,136 @@ export async function updatePopupSettings(settings: PopupSettings): Promise<{ su
     console.error('Error updating popup settings:', err);
     return { success: false, error: err?.message || 'Failed to update popup settings' };
   }
+}
+
+export type { Blog } from '../data/blogs';
+
+/**
+ * Fetch blogs from Supabase with fallback to static seed data
+ */
+export async function getBlogs(options?: { category?: string; status?: string }): Promise<Blog[]> {
+  try {
+    let query = supabase
+      .from('blogs')
+      .select('*')
+      .order('published_at', { ascending: false });
+
+    if (options?.status) {
+      query = query.eq('status', options.status);
+    } else {
+      query = query.eq('status', 'published');
+    }
+
+    if (options?.category && options.category !== 'all' && options.category !== 'ALL') {
+      query = query.eq('category', options.category);
+    }
+
+    const { data, error } = await query;
+
+    if (error || !data || data.length === 0) {
+      let filtered = initialBlogs;
+      if (options?.status) {
+        filtered = filtered.filter((b) => b.status === options.status);
+      } else {
+        filtered = filtered.filter((b) => b.status === 'published');
+      }
+      if (options?.category && options.category !== 'all' && options.category !== 'ALL') {
+        filtered = filtered.filter((b) => b.category.toLowerCase() === options.category!.toLowerCase());
+      }
+      return filtered;
+    }
+
+    return data.map((item: any) => ({
+      id: item.id,
+      slug: item.slug || item.id,
+      title: item.title,
+      excerpt: item.excerpt || '',
+      content: item.content || '',
+      cover_image: item.cover_image || '/images/hero-doors.jpg',
+      category: item.category || 'General',
+      author: item.author || 'ROEL Studio Editorial',
+      author_role: item.author_role || 'Architectural Materials Specialist',
+      read_time: item.read_time || '5 min read',
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      is_featured: !!item.is_featured,
+      status: item.status || 'published',
+      seo_title: item.seo_title || item.title,
+      seo_description: item.seo_description || item.excerpt || '',
+      seo_keywords: Array.isArray(item.seo_keywords) ? item.seo_keywords : [],
+      published_at: item.published_at || item.created_at || new Date().toISOString(),
+      created_at: item.created_at || new Date().toISOString(),
+      updated_at: item.updated_at || new Date().toISOString()
+    }));
+  } catch (err) {
+    console.warn('Falling back to static blogs:', err);
+    return initialBlogs;
+  }
+}
+
+/**
+ * Fetch a single blog post by slug
+ */
+export async function getBlogBySlug(slug: string): Promise<Blog | undefined> {
+  try {
+    const { data, error } = await supabase
+      .from('blogs')
+      .select('*')
+      .or(`slug.eq.${slug},id.eq.${slug}`)
+      .maybeSingle();
+
+    if (error || !data) {
+      const all = await getBlogs({ status: 'published' });
+      return all.find((b) => b.slug === slug || b.id === slug);
+    }
+
+    return {
+      id: data.id,
+      slug: data.slug || data.id,
+      title: data.title,
+      excerpt: data.excerpt || '',
+      content: data.content || '',
+      cover_image: data.cover_image || '/images/hero-doors.jpg',
+      category: data.category || 'General',
+      author: data.author || 'ROEL Studio Editorial',
+      author_role: data.author_role || 'Architectural Materials Specialist',
+      read_time: data.read_time || '5 min read',
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      is_featured: !!data.is_featured,
+      status: data.status || 'published',
+      seo_title: data.seo_title || data.title,
+      seo_description: data.seo_description || data.excerpt || '',
+      seo_keywords: Array.isArray(data.seo_keywords) ? data.seo_keywords : [],
+      published_at: data.published_at || data.created_at || new Date().toISOString(),
+      created_at: data.created_at || new Date().toISOString(),
+      updated_at: data.updated_at || new Date().toISOString()
+    };
+  } catch (err) {
+    console.warn('Falling back to local blog for slug:', slug, err);
+    const all = await getBlogs();
+    return all.find((b) => b.slug === slug || b.id === slug);
+  }
+}
+
+/**
+ * Fetch featured blogs for hero / spotlight
+ */
+export async function getFeaturedBlogs(limit = 1): Promise<Blog[]> {
+  const all = await getBlogs();
+  const featured = all.filter((b) => b.is_featured);
+  return (featured.length > 0 ? featured : all).slice(0, limit);
+}
+
+/**
+ * Fetch related blogs by category
+ */
+export async function getRelatedBlogs(currentSlug: string, category: string, limit = 2): Promise<Blog[]> {
+  const all = await getBlogs();
+  const matches = all.filter(
+    (b) => (b.slug !== currentSlug && b.id !== currentSlug) && b.category.toLowerCase() === category.toLowerCase()
+  );
+  if (matches.length >= limit) return matches.slice(0, limit);
+  const others = all.filter((b) => (b.slug !== currentSlug && b.id !== currentSlug) && !matches.some((m) => m.id === b.id));
+  return [...matches, ...others].slice(0, limit);
 }
 
 

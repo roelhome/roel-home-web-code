@@ -1,0 +1,883 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import { getBlogBySlug, getRelatedBlogs } from '../../lib/supabase';
+import { imgSrc, waUrl } from '../../data/originalData.js';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/blog');
+}
+
+const blog = await getBlogBySlug(slug);
+
+if (!blog || blog.status === 'draft') {
+  return Astro.redirect('/blog');
+}
+
+const relatedBlogs = await getRelatedBlogs(blog.slug, blog.category, 2);
+
+const siteUrl = "https://roelhomes.com";
+const canonicalURL = `${siteUrl}/blog/${blog.slug}`;
+const ogImageURL = new URL(imgSrc(blog.cover_image), siteUrl).toString();
+
+// Extract headings for table of contents
+const headingLines = blog.content
+  .split('\n')
+  .filter((line) => line.startsWith('## '))
+  .map((line) => {
+    const title = line.replace(/^##\s+/, '').trim();
+    const id = title
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return { title, id };
+  });
+
+// Simple markdown-to-html converter for rich article rendering
+function renderMarkdown(md: string): string {
+  let html = md;
+
+  // Process tables
+  html = html.replace(/(\|.+\|\n)+/g, (tableMatch) => {
+    const rows = tableMatch.trim().split('\n');
+    let tableHtml = '<div class="table-wrapper"><table>';
+    let isHeader = true;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i].trim();
+      if (row.includes('---')) {
+        isHeader = false;
+        continue;
+      }
+      const cols = row.split('|').filter((_, idx, arr) => idx !== 0 && idx !== arr.length - 1);
+      tableHtml += '<tr>';
+      cols.forEach((col) => {
+        const text = col.trim();
+        if (isHeader) {
+          tableHtml += `<th>${text}</th>`;
+        } else {
+          tableHtml += `<td>${text}</td>`;
+        }
+      });
+      tableHtml += '</tr>';
+    }
+    tableHtml += '</table></div>';
+    return tableHtml;
+  });
+
+  // Headings with IDs
+  html = html.replace(/^### (.*$)/gim, (_, text) => {
+    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
+    return `<h3 id="${id}">${text}</h3>`;
+  });
+
+  html = html.replace(/^## (.*$)/gim, (_, text) => {
+    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
+    return `<h2 id="${id}">${text}</h2>`;
+  });
+
+  // Images
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="article-figure"><img src="$2" alt="$1" loading="lazy" /><figcaption>$1</figcaption></figure>');
+
+  // Bold & Italic
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Blockquotes / Callout boxes
+  html = html.replace(/^\> (.*$)/gim, '<blockquote class="article-quote">$1</blockquote>');
+
+  // Unordered lists
+  html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/gms, '<ul>$1</ul>');
+  // Clean double ul tags
+  html = html.replace(/<\/ul>\s*<ul>/g, '');
+
+  // Horizontal rules
+  html = html.replace(/^---$/gim, '<hr class="article-divider" />');
+
+  // Paragraphs
+  const blocks = html.split(/\n\s*\n/);
+  html = blocks
+    .map((block) => {
+      const trimmed = block.trim();
+      if (
+        trimmed.startsWith('<h') ||
+        trimmed.startsWith('<ul') ||
+        trimmed.startsWith('<ol') ||
+        trimmed.startsWith('<div') ||
+        trimmed.startsWith('<table') ||
+        trimmed.startsWith('<figure') ||
+        trimmed.startsWith('<blockquote') ||
+        trimmed.startsWith('<hr')
+      ) {
+        return trimmed;
+      }
+      return `<p>${trimmed.replace(/\n/g, '<br />')}</p>`;
+    })
+    .join('\n');
+
+  return html;
+}
+
+const renderedArticleHtml = renderMarkdown(blog.content);
+
+// Rich Schema.org JSON-LD
+const articleJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BlogPosting",
+      "@id": `${canonicalURL}#article`,
+      "isPartOf": {
+        "@type": "WebPage",
+        "@id": canonicalURL,
+        "url": canonicalURL,
+        "name": blog.title
+      },
+      "headline": blog.title,
+      "description": blog.seo_description || blog.excerpt,
+      "image": [ogImageURL],
+      "datePublished": blog.published_at,
+      "dateModified": blog.updated_at || blog.published_at,
+      "author": {
+        "@type": "Person",
+        "name": blog.author,
+        "jobTitle": blog.author_role,
+        "worksFor": {
+          "@type": "Organization",
+          "name": "ROEL Home Solutions",
+          "url": siteUrl
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "ROEL Home Solutions",
+        "url": siteUrl,
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${siteUrl}/images/roel-logo-clean.png`
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": canonicalURL
+      },
+      "articleSection": blog.category,
+      "keywords": (blog.seo_keywords || []).join(', ')
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${canonicalURL}#breadcrumb`,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": siteUrl
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Architectural Journal",
+          "item": `${siteUrl}/blog`
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": blog.category,
+          "item": `${siteUrl}/blog`
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": blog.title,
+          "item": canonicalURL
+        }
+      ]
+    }
+  ]
+};
+
+const whatsappDiscussionUrl = waUrl(`Hello ROEL Studio, I read your article "${blog.title}" and would like to discuss material specifications for my project.`);
+---
+
+<Layout
+  title={`${blog.seo_title || blog.title} | ROEL Home Solutions`}
+  description={blog.seo_description || blog.excerpt}
+  image={imgSrc(blog.cover_image)}
+  article={true}
+>
+  <!-- Injected BlogPosting and Breadcrumbs Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify(articleJsonLd)} />
+
+  <!-- Breadcrumbs Bar -->
+  <div class="container" style="padding-top: 24px;">
+    <nav class="breadcrumbs" aria-label="Breadcrumb" style="margin: 0;">
+      <a href="/">Home</a> / <a href="/blog">Architectural Journal</a> / <span>{blog.category}</span>
+    </nav>
+  </div>
+
+  <!-- Article Header Section -->
+  <header class="container article-header">
+    <div class="article-meta-badge-row">
+      <span class="blog-badge-large">{blog.category}</span>
+      <span class="meta-item"><span class="clock-icon">⏱</span> {blog.read_time}</span>
+      <span class="meta-sep">•</span>
+      <span class="meta-item">
+        {new Date(blog.published_at).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        })}
+      </span>
+    </div>
+
+    <h1>{blog.title}</h1>
+
+    <p class="article-lead">
+      {blog.excerpt}
+    </p>
+
+    <div class="author-attribution-bar">
+      <div class="author-avatar">R</div>
+      <div>
+        <strong>{blog.author}</strong>
+        <span>{blog.author_role}</span>
+      </div>
+      <div class="article-share-links">
+        <span class="share-label">Share Article:</span>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(`${blog.title} — Read on ROEL: ${canonicalURL}`)}`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Share on WhatsApp"
+          class="share-btn wa-share"
+        >
+          WhatsApp ↗
+        </a>
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonicalURL)}`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Share on LinkedIn"
+          class="share-btn"
+        >
+          LinkedIn
+        </a>
+        <button
+          type="button"
+          class="share-btn copy-btn"
+          id="copy-link-btn"
+          data-url={canonicalURL}
+        >
+          Copy Link
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Large Featured Cover Image -->
+  <div class="container article-hero-media">
+    <img
+      src={imgSrc(blog.cover_image)}
+      alt={blog.title}
+      loading="eager"
+    />
+  </div>
+
+  <!-- Article Body Layout (2 Columns) -->
+  <section class="container article-main-layout">
+    <!-- Sidebar Column -->
+    <aside class="article-sidebar">
+      {headingLines.length > 0 && (
+        <div class="toc-box">
+          <h4>In this Architectural Guide</h4>
+          <nav aria-label="Table of contents">
+            <ol>
+              {headingLines.map((h) => (
+                <li>
+                  <a href={`#${h.id}`}>{h.title}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </div>
+      )}
+
+      <!-- Consultation Card -->
+      <div class="sidebar-consult-card">
+        <span class="micro" style="color: var(--champagne); display: block; margin-bottom: 8px;">Kochi Studio Advisory</span>
+        <h4>Planning a Space in Kerala?</h4>
+        <p>
+          Consult with ROEL material specialists for custom door schedules, acoustic paneling layouts, or natural stone surface curation.
+        </p>
+        <a
+          href={whatsappDiscussionUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn gold small"
+          style="width: 100%; justify-content: center; margin-top: 14px;"
+        >
+          Chat on WhatsApp ↗
+        </a>
+        <button
+          type="button"
+          class="btn outline-light small"
+          style="width: 100%; justify-content: center; margin-top: 8px;"
+          data-enquiry={`Consultation requested from article: ${blog.title}`}
+        >
+          Request Meeting
+        </button>
+      </div>
+
+      <!-- Author Bio -->
+      <div class="author-bio-card">
+        <h5>About ROEL Studio</h5>
+        <p>
+          ROEL Home Solutions curates world-class architectural materials, engineered entrance systems, bespoke wall solutions, and fine surface materials on NH-66, Kochi, Kerala.
+        </p>
+      </div>
+    </aside>
+
+    <!-- Main Content Column -->
+    <article class="article-body-content">
+      <div class="rich-text-content" set:html={renderedArticleHtml} />
+
+      <!-- Article Tags -->
+      {blog.tags && blog.tags.length > 0 && (
+        <div class="article-tags-row">
+          <span class="tags-label">Related Topics:</span>
+          {blog.tags.map((t) => (
+            <span class="tag-chip">{t}</span>
+          ))}
+        </div>
+      )}
+
+      <!-- Bottom Direct WhatsApp Prompt -->
+      <div class="article-bottom-cta">
+        <div class="cta-inner">
+          <div>
+            <span class="micro" style="color: var(--walnut); font-weight: 700;">Direct Project Consultation</span>
+            <h3 class="serif" style="margin: 6px 0 10px; font-size: 26px;">Have questions about this material for your home?</h3>
+            <p style="margin: 0; font-size: 13px; color: var(--muted); max-width: 520px;">
+              Our Kochi showroom features full-scale physical samples of all architectural doors, acoustic fluted slats, and natural surface slabs referenced in this article.
+            </p>
+          </div>
+          <div style="flex-shrink: 0;">
+            <a href={whatsappDiscussionUrl} target="_blank" rel="noopener noreferrer" class="btn">
+              Consult on WhatsApp <span class="arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- Related Articles Section -->
+  {relatedBlogs.length > 0 && (
+    <section class="section" style="background: #FAF7F2; border-top: 1px solid var(--line);">
+      <div class="container">
+        <div class="section-head" style="margin-bottom: 32px;">
+          <div>
+            <span class="eyebrow">Continue Exploring</span>
+            <h2 style="font-size: clamp(32px, 3.5vw, 48px); margin-top: 8px;">Related Architectural Guides</h2>
+          </div>
+          <a href="/blog" class="text-link">View all articles <span class="arrow">↗</span></a>
+        </div>
+
+        <div class="related-articles-grid">
+          {relatedBlogs.map((rel) => (
+            <a href={`/blog/${rel.slug}`} class="related-card">
+              <div class="related-photo">
+                <img src={imgSrc(rel.cover_image)} alt={rel.title} loading="lazy" />
+                <span class="blog-badge">{rel.category}</span>
+              </div>
+              <div class="related-copy">
+                <small>{rel.read_time}</small>
+                <h3>{rel.title}</h3>
+                <span class="read-link">Read Guide ↗</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+</Layout>
+
+<style>
+  /* Header Styles */
+  .article-header {
+    padding-top: 48px;
+    padding-bottom: 36px;
+    max-width: 960px;
+  }
+  .article-meta-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .blog-badge-large {
+    background: var(--ink);
+    color: var(--champagne);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    padding: 6px 14px;
+    border-radius: 2px;
+  }
+  .clock-icon {
+    font-size: 13px;
+  }
+  .article-header h1 {
+    font: 400 clamp(36px, 4.5vw, 64px)/1.08 RoelSerif, Georgia, serif;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0 0 20px;
+  }
+  .article-lead {
+    font-size: clamp(15px, 1.3vw, 18px);
+    line-height: 1.8;
+    color: var(--walnut);
+    margin: 0 0 32px;
+  }
+  .author-attribution-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .author-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--champagne);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .author-attribution-bar strong {
+    display: block;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .author-attribution-bar span {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .article-share-links {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .share-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .share-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--ink);
+    background: #FAF7F2;
+    border: 1px solid rgba(118, 89, 65, 0.25);
+    border-radius: 2px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .share-btn:hover {
+    background: var(--ink);
+    color: var(--ivory);
+    border-color: var(--ink);
+  }
+  .wa-share:hover {
+    background: #128C7E;
+    border-color: #128C7E;
+    color: #fff;
+  }
+
+  /* Hero Media */
+  .article-hero-media {
+    height: clamp(340px, 45vw, 620px);
+    overflow: hidden;
+    background: var(--ink);
+    border-radius: 4px;
+    margin-bottom: 64px;
+  }
+  .article-hero-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Main 2-Column Layout */
+  .article-main-layout {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: clamp(40px, 6vw, 80px);
+    align-items: start;
+    padding-bottom: 96px;
+  }
+
+  /* Sidebar */
+  .article-sidebar {
+    position: sticky;
+    top: 104px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .toc-box {
+    background: #FAF7F2;
+    padding: 24px;
+    border: 1px solid rgba(118, 89, 65, 0.22);
+    border-radius: 4px;
+  }
+  .toc-box h4 {
+    font: 400 18px RoelSerif, Georgia, serif;
+    margin: 0 0 14px;
+    color: var(--ink);
+  }
+  .toc-box ol {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--walnut);
+    line-height: 1.5;
+  }
+  .toc-box a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .toc-box a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+  .sidebar-consult-card {
+    background: var(--ink);
+    color: var(--ivory);
+    padding: 26px 24px;
+    border-radius: 4px;
+    border: 1px solid rgba(229, 191, 140, 0.2);
+  }
+  .sidebar-consult-card h4 {
+    font: 400 20px RoelSerif, Georgia, serif;
+    margin: 0 0 8px;
+    color: var(--champagne);
+  }
+  .sidebar-consult-card p {
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: rgba(240, 226, 206, 0.76);
+    margin: 0;
+  }
+  .author-bio-card {
+    background: #FAF7F2;
+    padding: 20px 24px;
+    border: 1px solid rgba(118, 89, 65, 0.18);
+    border-radius: 4px;
+  }
+  .author-bio-card h5 {
+    font: 400 16px RoelSerif, Georgia, serif;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .author-bio-card p {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* Rich Text Article Body */
+  .article-body-content {
+    max-width: 820px;
+  }
+  :global(.rich-text-content) {
+    font-size: 15.5px;
+    line-height: 1.95;
+    color: #2b1f16;
+  }
+  :global(.rich-text-content h2) {
+    font: 400 clamp(28px, 3.2vw, 42px)/1.15 RoelSerif, Georgia, serif;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 54px 0 20px;
+    scroll-margin-top: 100px;
+  }
+  :global(.rich-text-content h3) {
+    font: 400 clamp(22px, 2.4vw, 30px)/1.2 RoelSerif, Georgia, serif;
+    color: var(--walnut);
+    margin: 36px 0 14px;
+    scroll-margin-top: 100px;
+  }
+  :global(.rich-text-content p) {
+    margin: 0 0 22px;
+  }
+  :global(.rich-text-content ul), :global(.rich-text-content ol) {
+    margin: 0 0 26px;
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  :global(.rich-text-content li) {
+    line-height: 1.8;
+  }
+  :global(.rich-text-content strong) {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  :global(.rich-text-content em) {
+    font-style: italic;
+  }
+  :global(.article-quote) {
+    margin: 36px 0;
+    padding: 24px 30px;
+    background: #FAF7F2;
+    border-left: 3px solid var(--gold);
+    font: italic 17px/1.7 RoelSerif, Georgia, serif;
+    color: var(--walnut);
+    border-radius: 0 4px 4px 0;
+  }
+  :global(.article-figure) {
+    margin: 44px 0;
+    background: var(--ink);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  :global(.article-figure img) {
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    object-fit: cover;
+    display: block;
+  }
+  :global(.article-figure figcaption) {
+    padding: 10px 16px;
+    background: #19120C;
+    color: rgba(240, 226, 206, 0.75);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+  :global(.table-wrapper) {
+    overflow-x: auto;
+    margin: 36px 0;
+    border: 1px solid rgba(118, 89, 65, 0.25);
+    border-radius: 4px;
+    background: #FAF7F2;
+  }
+  :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  :global(th) {
+    background: var(--ink);
+    color: var(--champagne);
+    font-family: RoelSerif, Georgia, serif;
+    font-weight: 400;
+    font-size: 14px;
+    padding: 14px 18px;
+    letter-spacing: 0.03em;
+  }
+  :global(td) {
+    padding: 13px 18px;
+    border-bottom: 1px solid rgba(118, 89, 65, 0.16);
+    color: #332418;
+    line-height: 1.6;
+  }
+  :global(tr:last-child td) {
+    border-bottom: none;
+  }
+  :global(.article-divider) {
+    height: 1px;
+    background: var(--line);
+    border: none;
+    margin: 48px 0;
+  }
+
+  /* Tags Row */
+  .article-tags-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+  .tags-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .tag-chip {
+    padding: 5px 12px;
+    background: #FAF7F2;
+    border: 1px solid rgba(118, 89, 65, 0.22);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--walnut);
+    font-weight: 500;
+  }
+
+  /* Bottom CTA */
+  .article-bottom-cta {
+    margin-top: 56px;
+    background: #FAF7F2;
+    border: 1px solid rgba(118, 89, 65, 0.25);
+    border-radius: 4px;
+    padding: 36px 40px;
+  }
+  .cta-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  /* Related Section */
+  .related-articles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .related-card {
+    background: #FFFFFF;
+    border: 1px solid rgba(118, 89, 65, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  }
+  .related-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(25, 18, 12, 0.08);
+  }
+  .related-photo {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background: var(--ink);
+  }
+  .related-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease);
+  }
+  .related-card:hover .related-photo img {
+    transform: scale(1.05);
+  }
+  .related-copy {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  .related-copy small {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .related-copy h3 {
+    font: 400 21px/1.25 RoelSerif, Georgia, serif;
+    margin: 0 0 14px;
+    color: var(--ink);
+    transition: color 0.2s;
+  }
+  .related-card:hover .related-copy h3 {
+    color: var(--walnut);
+  }
+  .read-link {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--walnut);
+    margin-top: auto;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 950px) {
+    .article-main-layout {
+      grid-template-columns: 1fr;
+    }
+    .article-sidebar {
+      position: static;
+      order: 2;
+      margin-top: 48px;
+    }
+    .article-body-content {
+      order: 1;
+    }
+    .related-articles-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .author-attribution-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .article-share-links {
+      margin-left: 0;
+      width: 100%;
+    }
+    .article-bottom-cta {
+      padding: 24px 20px;
+    }
+  }
+</style>
+
+<script>
+  const copyBtn = document.getElementById('copy-link-btn');
+  copyBtn?.addEventListener('click', () => {
+    const url = copyBtn.getAttribute('data-url') || window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      const orig = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copyBtn.textContent = orig;
+      }, 2500);
+    });
+  });
+</script>

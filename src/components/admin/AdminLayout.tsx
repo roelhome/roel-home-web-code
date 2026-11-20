@@ -6,6 +6,7 @@ import { ProductsManager } from './ProductsManager';
 import { CategoriesManager } from './CategoriesManager';
 import { ProjectsManager } from './ProjectsManager';
 import { ServicesManager } from './ServicesManager';
+import { BlogsManager } from './BlogsManager';
 import { HeroManager } from './HeroManager';
 import { HomeVideoManager } from './HomeVideoManager';
 import { PopupManager } from './PopupManager';
@@ -26,10 +27,11 @@ import {
   Sparkles,
   Film,
   SlidersHorizontal,
-  Briefcase
+  Briefcase,
+  BookOpen
 } from 'lucide-react';
 
-type TabKey = 'leads' | 'hero' | 'video' | 'popup' | 'products' | 'categories' | 'projects' | 'services' | 'media';
+type TabKey = 'leads' | 'hero' | 'video' | 'popup' | 'products' | 'categories' | 'projects' | 'services' | 'blogs' | 'media';
 
 interface NavItem {
   key: TabKey;
@@ -159,6 +161,12 @@ export const AdminLayout: React.FC = () => {
       icon: Briefcase
     },
     {
+      key: 'blogs',
+      label: 'Blog & Articles',
+      description: 'SEO journal, guides & drag-drop media',
+      icon: BookOpen
+    },
+    {
       key: 'media',
       label: 'Cloudflare R2 Media',
       description: 'S3 storage bucket & CDN',
@@ -242,7 +250,7 @@ export const AdminLayout: React.FC = () => {
             top: 0;
             bottom: 0;
             left: 0;
-            z-index: 100;
+            z-index: 110 !important;
             width: 240px !important;
             min-width: 240px !important;
             transform: translateX(-100%);
@@ -251,6 +259,7 @@ export const AdminLayout: React.FC = () => {
           }
           .roel-sidebar.mobile-open {
             transform: translateX(0) !important;
+            z-index: 110 !important;
           }
           .roel-mobile-backdrop {
             display: block !important;
@@ -292,7 +301,7 @@ export const AdminLayout: React.FC = () => {
           display: 'flex',
           flexDirection: 'column',
           borderRight: '1px solid rgba(229, 191, 140, 0.12)',
-          zIndex: 80,
+          zIndex: mobileOpen ? 110 : 80,
           transition: 'width 0.2s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           overflow: 'hidden',
           flexShrink: 0
@@ -673,6 +682,7 @@ export const AdminLayout: React.FC = () => {
           {activeTab === 'categories' && <CategoriesManager />}
           {activeTab === 'projects' && <ProjectsManager />}
           {activeTab === 'services' && <ServicesManager />}
+          {activeTab === 'blogs' && <BlogsManager />}
           {activeTab === 'media' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ backgroundColor: '#fff', padding: '28px', border: '1px solid rgba(118,89,65,0.2)' }}>

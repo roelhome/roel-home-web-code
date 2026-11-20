@@ -1,0 +1,506 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import { getBlogs } from '../../lib/supabase';
+import { imgSrc } from '../../data/originalData.js';
+
+const blogs = await getBlogs({ status: 'published' });
+
+const categories = ['All', ...Array.from(new Set(blogs.map((b) => b.category)))];
+const featuredBlog = blogs.find((b) => b.is_featured) || blogs[0];
+const otherBlogs = blogs.filter((b) => b.id !== featuredBlog?.id);
+
+const siteUrl = "https://roelhomes.com";
+const canonicalURL = `${siteUrl}/blog`;
+
+// CollectionPage JSON-LD Schema
+const blogListSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "ROEL Architectural Journal & Material Guides",
+  "url": canonicalURL,
+  "description": "Comprehensive comparative guides on architectural doors, WPC vs timber, acoustic fluted wall systems, and natural surfaces for modern Kerala residences.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "ROEL Home Solutions",
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/images/roel-logo-clean.png`
+    }
+  },
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListElement": blogs.map((blog, idx) => ({
+      "@type": "ListItem",
+      "position": idx + 1,
+      "url": `${siteUrl}/blog/${blog.slug}`,
+      "name": blog.title
+    }))
+  }
+};
+---
+
+<Layout
+  title="Architectural Journal & Material Guides | ROEL Home Solutions"
+  description="Expert architectural guides on WPC vs wooden doors, acoustic fluted wall panels, and curated stone & veneer surfaces for modern luxury residences in Kochi, Kerala."
+  image={featuredBlog ? imgSrc(featuredBlog.cover_image) : "/images/hero-doors.jpg"}
+>
+  <!-- Injected CollectionPage Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify(blogListSchema)} />
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">A visual &amp; material journal</span>
+      <h1>Knowledge in <em>detail.</em></h1>
+      <p>
+        Architectural insights, climate-tested material guides, and design advice curated by ROEL specialists for contemporary living spaces.
+      </p>
+      <div class="page-count">{String(blogs.length).padStart(2, '0')}</div>
+    </div>
+  </section>
+
+  <!-- Main Content Container -->
+  <section class="section" style="padding-top: 60px;">
+    <div class="container">
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs" aria-label="Breadcrumb" style="margin-top: 0; margin-bottom: 40px;">
+        <a href="/">Home</a> / <span>Architectural Journal</span>
+      </nav>
+
+      <!-- Featured Spotlight Article -->
+      {featuredBlog && (
+        <div class="featured-blog-card" style="margin-bottom: 72px;">
+          <a href={`/blog/${featuredBlog.slug}`} class="featured-blog-grid">
+            <div class="featured-blog-media">
+              <img
+                src={imgSrc(featuredBlog.cover_image)}
+                alt={featuredBlog.title}
+                loading="eager"
+              />
+              <span class="blog-badge featured-badge">★ Featured Guide</span>
+            </div>
+            <div class="featured-blog-content">
+              <div class="blog-meta-row">
+                <span class="blog-category-tag">{featuredBlog.category}</span>
+                <span class="meta-sep">•</span>
+                <span class="blog-meta-time">{featuredBlog.read_time}</span>
+                <span class="meta-sep">•</span>
+                <span class="blog-meta-date">
+                  {new Date(featuredBlog.published_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+              <h2>{featuredBlog.title}</h2>
+              <p>{featuredBlog.excerpt}</p>
+              <div class="featured-author-line">
+                <div class="author-circle">R</div>
+                <div>
+                  <strong>{featuredBlog.author}</strong>
+                  <span>{featuredBlog.author_role}</span>
+                </div>
+                <div class="read-action">
+                  <span>Read Complete Guide</span>
+                  <span class="arrow">↗</span>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      )}
+
+      <!-- Filter Row -->
+      <div class="blog-filter-header">
+        <div>
+          <span class="micro muted">Filter by Material Domain</span>
+          <h3 class="serif" style="margin: 4px 0 0; font-size: clamp(24px, 2.5vw, 36px);">All Articles</h3>
+        </div>
+        <div class="filter-row" style="margin-bottom: 0;" id="category-filter-bar">
+          {categories.map((cat, idx) => (
+            <button
+              type="button"
+              class={`filter-chip ${idx === 0 ? 'active' : ''}`}
+              data-category={cat}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="divider" style="margin: 24px 0 48px;"></div>
+
+      <!-- Articles Grid -->
+      <div class="blog-grid" id="articles-container">
+        {blogs.map((b) => (
+          <article class="blog-card" data-category={b.category}>
+            <a href={`/blog/${b.slug}`} class="blog-card-link">
+              <div class="blog-card-media">
+                <img
+                  src={imgSrc(b.cover_image)}
+                  alt={b.title}
+                  loading="lazy"
+                />
+                <span class="blog-badge">{b.category}</span>
+              </div>
+              <div class="blog-card-body">
+                <div class="blog-card-meta">
+                  <span>{b.read_time}</span>
+                  <span class="meta-sep">•</span>
+                  <span>
+                    {new Date(b.published_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </div>
+                <h3>{b.title}</h3>
+                <p>{b.excerpt}</p>
+                <div class="blog-card-footer">
+                  <span class="author-name">{b.author}</span>
+                  <span class="read-more">Read Guide <span class="arrow">↗</span></span>
+                </div>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Band -->
+  <section class="cta-band">
+    <div class="container cta-row">
+      <div>
+        <span class="eyebrow">Architectural Material Advisory</span>
+        <h2>Let's shape your<br /><em class="italic">next space.</em></h2>
+      </div>
+      <div>
+        <p>
+          Need material recommendations tailored to your floor plan or climate zone? Connect with our Kochi design consultants directly.
+        </p>
+        <button
+          class="btn"
+          type="button"
+          data-enquiry="Consultation based on Architectural Journal articles"
+        >
+          Request Material Consultation <span class="arrow">↗</span>
+        </button>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  /* Featured Article Card */
+  .featured-blog-card {
+    background: #FAF7F2;
+    border: 1px solid rgba(118, 89, 65, 0.22);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+  }
+  .featured-blog-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(118, 89, 65, 0.4);
+    box-shadow: 0 16px 40px rgba(25, 18, 12, 0.09);
+  }
+  .featured-blog-grid {
+    display: grid;
+    grid-template-columns: 52% 48%;
+    text-decoration: none;
+    color: inherit;
+  }
+  .featured-blog-media {
+    position: relative;
+    height: 440px;
+    background: var(--ink);
+    overflow: hidden;
+  }
+  .featured-blog-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease);
+  }
+  .featured-blog-card:hover .featured-blog-media img {
+    transform: scale(1.04);
+  }
+  .featured-blog-content {
+    padding: clamp(32px, 4vw, 56px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .blog-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .blog-category-tag {
+    color: var(--walnut);
+    font-weight: 700;
+  }
+  .meta-sep {
+    opacity: 0.4;
+  }
+  .featured-blog-content h2 {
+    font: 400 clamp(28px, 2.8vw, 42px)/1.12 RoelSerif, Georgia, serif;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 0 0 16px;
+    transition: color 0.2s;
+  }
+  .featured-blog-card:hover .featured-blog-content h2 {
+    color: var(--walnut);
+  }
+  .featured-blog-content p {
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--muted);
+    margin: 0 0 28px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .featured-author-line {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .author-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--champagne);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .featured-author-line strong {
+    display: block;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .featured-author-line span {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .read-action {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--walnut);
+    letter-spacing: 0.04em;
+  }
+
+  /* Filter Header */
+  .blog-filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  /* Articles Grid */
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .blog-card {
+    background: #FAF7F2;
+    border: 1px solid rgba(118, 89, 65, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+  }
+  .blog-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(118, 89, 65, 0.38);
+    box-shadow: 0 12px 28px rgba(25, 18, 12, 0.07);
+  }
+  .blog-card-link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+  .blog-card-media {
+    position: relative;
+    height: 240px;
+    background: var(--ink);
+    overflow: hidden;
+  }
+  .blog-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease);
+  }
+  .blog-card:hover .blog-card-media img {
+    transform: scale(1.055);
+  }
+  .blog-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    padding: 6px 11px;
+    background: rgba(25, 18, 12, 0.88);
+    color: var(--ivory);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 2px;
+  }
+  .featured-badge {
+    background: var(--champagne);
+    color: var(--ink);
+    font-weight: 800;
+  }
+  .blog-card-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  .blog-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .blog-card-body h3 {
+    font: 400 clamp(20px, 1.8vw, 25px)/1.2 RoelSerif, Georgia, serif;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin: 0 0 10px;
+    transition: color 0.2s;
+  }
+  .blog-card:hover .blog-card-body h3 {
+    color: var(--walnut);
+  }
+  .blog-card-body p {
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin: 0 0 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .blog-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    margin-top: auto;
+    border-top: 1px solid rgba(118, 89, 65, 0.14);
+    font-size: 11px;
+  }
+  .author-name {
+    color: var(--walnut);
+    font-weight: 600;
+  }
+  .read-more {
+    color: var(--ink);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform 0.2s;
+  }
+  .blog-card:hover .read-more {
+    color: var(--walnut);
+    transform: translateX(2px);
+  }
+
+  /* Responsive Breakpoints */
+  @media (max-width: 950px) {
+    .featured-blog-grid {
+      grid-template-columns: 1fr;
+    }
+    .featured-blog-media {
+      height: 280px;
+    }
+    .blog-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+  }
+  @media (max-width: 640px) {
+    .blog-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .blog-card-media {
+      height: 200px;
+    }
+    .featured-author-line {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .read-action {
+      margin-left: 0;
+    }
+  }
+</style>
+
+<script>
+  // Dynamic Category Filtering
+  const filterChips = document.querySelectorAll('#category-filter-bar .filter-chip');
+  const articles = document.querySelectorAll('#articles-container .blog-card');
+
+  filterChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const selected = chip.getAttribute('data-category');
+
+      filterChips.forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      articles.forEach((art) => {
+        const artCat = art.getAttribute('data-category');
+        if (selected === 'All' || artCat === selected) {
+          (art as HTMLElement).style.display = 'flex';
+        } else {
+          (art as HTMLElement).style.display = 'none';
+        }
+      });
+    });
+  });
+</script>

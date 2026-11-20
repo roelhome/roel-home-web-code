@@ -16,6 +16,7 @@ const { currentPath = '/' } = Astro.props;
       <a href="/catalogue" data-nav="catalogue" class={currentPath.startsWith('/catalogue') || currentPath.startsWith('/product') ? 'active' : ''}>Products</a>
       <a href="/services" data-nav="services" class={currentPath.startsWith('/services') || currentPath.startsWith('/service') ? 'active' : ''}>Services</a>
       <a href="/projects" data-nav="projects" class={currentPath.startsWith('/projects') || currentPath.startsWith('/project') ? 'active' : ''}>Projects</a>
+      <a href="/blog" data-nav="blog" class={currentPath.startsWith('/blog') ? 'active' : ''}>Journal</a>
       <a href="/about" data-nav="about" class={currentPath === '/about' ? 'active' : ''}>Our Story</a>
       <a href="/contact" data-nav="contact" class={currentPath === '/contact' ? 'active' : ''}>Contact</a>
     </nav>

@@ -23,6 +23,7 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [customUrl, setCustomUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Normalize images to array
@@ -119,6 +120,18 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
     }
   };
 
+  const handleApplyCustomUrl = () => {
+    const trimmed = customUrl.trim();
+    if (!trimmed) return;
+    if (multiple) {
+      onChange([...images, trimmed]);
+    } else {
+      onChange(trimmed);
+    }
+    setCustomUrl('');
+    setError(null);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       {label && (
@@ -199,6 +212,48 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
             </div>
           </>
         )}
+      </div>
+
+      {/* Manual URL / Local Path Input Option */}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <input
+          type="text"
+          value={customUrl}
+          onChange={(e) => setCustomUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleApplyCustomUrl();
+            }
+          }}
+          placeholder="Or paste image URL / site path (e.g. /images/hero-walls.jpg)"
+          style={{
+            flex: 1,
+            padding: '7px 10px',
+            fontSize: '12px',
+            border: '1px solid rgba(118,89,65,0.25)',
+            borderRadius: '4px',
+            backgroundColor: '#FAF7F2',
+            color: '#19120C'
+          }}
+        />
+        <button
+          type="button"
+          onClick={handleApplyCustomUrl}
+          style={{
+            padding: '7px 12px',
+            backgroundColor: '#19120C',
+            color: '#F0E2CE',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Add Image URL
+        </button>
       </div>
 
       {/* Error Message */}
