@@ -7,7 +7,7 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
-  const [email, setEmail] = useState('hello@roelhome.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +152,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
               <input
                 type="email"
                 required
+                placeholder="Enter your email"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{
