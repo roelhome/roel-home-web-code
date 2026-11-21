@@ -3,4 +3,4 @@ Disallow: /admin/
 Disallow: /api/admin/
 Allow: /
 
-Sitemap: https://roelhomes.com/sitemap.xml
+Sitemap: https://roelhome.com/sitemap.xml

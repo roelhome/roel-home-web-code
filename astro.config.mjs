@@ -12,7 +12,7 @@ export default defineConfig({
     }
   }),
   integrations: [react()],
-  site: 'https://roelhomes.com',
+  site: 'https://roelhome.com',
   build: {
     format: 'directory'
   }
