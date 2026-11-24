@@ -955,7 +955,7 @@ export const HeroManager: React.FC = () => {
           </div>
 
           {/* Form Fields Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {/* Left Column: Image Uploaders */}
             <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '8px', border: '1px solid rgba(118, 89, 65, 0.16)' }}>
               <h3 style={{ fontSize: '15px', margin: '0 0 16px', color: '#19120C', fontWeight: 700 }}>
@@ -1152,7 +1152,7 @@ export const HeroManager: React.FC = () => {
               </div>
 
               {/* CTA Text & Link */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#19120C', marginBottom: '6px' }}>
                     CTA Button Text
@@ -1195,7 +1195,7 @@ export const HeroManager: React.FC = () => {
               </div>
 
               {/* Ordering & Active Status */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderTop: '1px solid rgba(118, 89, 65, 0.15)', paddingTop: '16px' }}>
+              <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderTop: '1px solid rgba(118, 89, 65, 0.15)', paddingTop: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#19120C', marginBottom: '6px' }}>
                     Slide Order (1, 2, 3...)

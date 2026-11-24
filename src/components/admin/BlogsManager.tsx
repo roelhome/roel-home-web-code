@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { type Blog } from '../../data/blogs';
 import { ImageDropzone } from './ImageDropzone';
+import { renderMarkdown } from '../../lib/markdown';
 import {
   Plus,
   Search,
@@ -51,6 +52,7 @@ export const BlogsManager: React.FC = () => {
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [inArticleImages, setInArticleImages] = useState<string[]>([]);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [seoKeywordsRaw, setSeoKeywordsRaw] = useState('');
   const bodyImageInputRef = useRef<HTMLInputElement>(null);
   const [uploadingBodyImage, setUploadingBodyImage] = useState(false);
 
@@ -173,6 +175,7 @@ export const BlogsManager: React.FC = () => {
       published_at: new Date().toISOString()
     });
     setInArticleImages([]);
+    setSeoKeywordsRaw('Kochi architecture, ROEL Home Solutions');
     setIsCustomCategory(false);
     setIsNew(true);
     setActiveTab('content');
@@ -186,6 +189,7 @@ export const BlogsManager: React.FC = () => {
       tags: Array.isArray(blog.tags) ? [...blog.tags] : [],
       seo_keywords: Array.isArray(blog.seo_keywords) ? [...blog.seo_keywords] : []
     });
+    setSeoKeywordsRaw(Array.isArray(blog.seo_keywords) ? blog.seo_keywords.join(', ') : '');
     setInArticleImages([]);
     setIsCustomCategory(false);
     setIsNew(false);
@@ -249,6 +253,10 @@ export const BlogsManager: React.FC = () => {
     setSaving(true);
     setError(null);
 
+    const parsedKeywords = seoKeywordsRaw
+      ? seoKeywordsRaw.split(',').map((k) => k.trim()).filter(Boolean)
+      : (Array.isArray(editingBlog.seo_keywords) ? editingBlog.seo_keywords : []);
+
     const payload = {
       id: finalSlug,
       slug: finalSlug,
@@ -265,7 +273,7 @@ export const BlogsManager: React.FC = () => {
       status: editingBlog.status || 'published',
       seo_title: editingBlog.seo_title?.trim() || editingBlog.title.trim(),
       seo_description: editingBlog.seo_description?.trim() || editingBlog.excerpt?.trim() || '',
-      seo_keywords: Array.isArray(editingBlog.seo_keywords) ? editingBlog.seo_keywords : [],
+      seo_keywords: parsedKeywords,
       published_at: editingBlog.published_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -291,6 +299,7 @@ export const BlogsManager: React.FC = () => {
 
       setTimeout(() => setSuccessMessage(null), 3500);
       setEditingBlog(null);
+      setSeoKeywordsRaw('');
       await fetchBlogs();
     } catch (err: any) {
       console.error('Save blog error:', err);
@@ -555,6 +564,7 @@ export const BlogsManager: React.FC = () => {
 
           {/* Search & Filter Bar */}
           <div
+            className="roel-filter-bar"
             style={{
               backgroundColor: '#FFFFFF',
               padding: '18px 24px',
@@ -599,7 +609,7 @@ export const BlogsManager: React.FC = () => {
             </div>
 
             {/* Filter controls */}
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="roel-filter-controls" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
               {/* Status Filter */}
               <select
                 value={statusFilter}
@@ -688,6 +698,7 @@ export const BlogsManager: React.FC = () => {
                 {filteredBlogs.map((b, idx) => (
                   <div
                     key={b.id}
+                    className="roel-blog-card-item"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '120px 1fr auto',
@@ -701,6 +712,7 @@ export const BlogsManager: React.FC = () => {
                   >
                     {/* Thumbnail */}
                     <div
+                      className="roel-blog-card-thumbnail"
                       style={{
                         width: '120px',
                         height: '80px',
@@ -815,7 +827,7 @@ export const BlogsManager: React.FC = () => {
                     </div>
 
                     {/* Action buttons */}
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <div className="roel-blog-card-actions" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                       <a
                         href={`/blog/${b.slug}`}
                         target="_blank"
@@ -933,6 +945,7 @@ export const BlogsManager: React.FC = () => {
         >
           {/* Top Form Navigation */}
           <div
+            className="roel-form-topbar"
             style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -944,7 +957,10 @@ export const BlogsManager: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button
                 type="button"
-                onClick={() => setEditingBlog(null)}
+                onClick={() => {
+                  setEditingBlog(null);
+                  setSeoKeywordsRaw('');
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -967,10 +983,13 @@ export const BlogsManager: React.FC = () => {
               </h3>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div className="roel-form-topbar-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <button
                 type="button"
-                onClick={() => setEditingBlog(null)}
+                onClick={() => {
+                  setEditingBlog(null);
+                  setSeoKeywordsRaw('');
+                }}
                 style={{
                   padding: '9px 16px',
                   backgroundColor: '#FAF7F2',
@@ -1019,7 +1038,7 @@ export const BlogsManager: React.FC = () => {
           </div>
 
           {/* Sub-tabs: Content, SEO, Media & Assets, Preview */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(118,89,65,0.15)', paddingBottom: '12px' }}>
+          <div className="roel-tabs-scroll">
             {[
               { key: 'content', label: '1. Content & Writing' },
               { key: 'seo', label: '2. SEO & Meta Tags' },
@@ -1051,7 +1070,7 @@ export const BlogsManager: React.FC = () => {
           {activeTab === 'content' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Row 1: Title & Slug */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px' }}>
+              <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, color: '#5b4130', marginBottom: '6px' }}>
                     Article Title *
@@ -1262,7 +1281,7 @@ export const BlogsManager: React.FC = () => {
               </div>
 
               {/* Row 3: Author & Author Role */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, color: '#5b4130', marginBottom: '6px' }}>
                     Author Name
@@ -1431,7 +1450,7 @@ export const BlogsManager: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown('| Feature | Option A | Option B |\n| :--- | :--- | :--- |\n| Moisture Resistance | High | Moderate |\n| Termite Resistance | 100% | Requires Treatment |')}
+                      onClick={() => insertMarkdown('\n| Feature | Option A | Option B |\n| :--- | :--- | :--- |\n| Moisture Resistance | High | Moderate |\n| Termite Resistance | 100% | Requires Treatment |\n')}
                       style={{ padding: '3px 7px', fontSize: '11px', backgroundColor: '#F0E2CE', border: '1px solid rgba(118,89,65,0.3)', borderRadius: '2px', cursor: 'pointer' }}
                     >
                       + Table
@@ -1577,11 +1596,17 @@ export const BlogsManager: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={Array.isArray(editingBlog.seo_keywords) ? editingBlog.seo_keywords.join(', ') : ''}
+                  value={seoKeywordsRaw}
                   onChange={(e) => {
                     const raw = e.target.value;
+                    setSeoKeywordsRaw(raw);
                     const parsed = raw.split(',').map((k) => k.trim()).filter(Boolean);
                     setEditingBlog((prev) => ({ ...prev, seo_keywords: parsed }));
+                  }}
+                  onBlur={() => {
+                    if (Array.isArray(editingBlog.seo_keywords)) {
+                      setSeoKeywordsRaw(editingBlog.seo_keywords.join(', '));
+                    }
                   }}
                   placeholder="e.g. WPC doors Kochi, waterproof doors Kerala, wooden vs WPC doors, interior doors Kerala"
                   style={{
@@ -1593,6 +1618,50 @@ export const BlogsManager: React.FC = () => {
                     backgroundColor: '#FAF7F2'
                   }}
                 />
+                {Array.isArray(editingBlog.seo_keywords) && editingBlog.seo_keywords.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                    {editingBlog.seo_keywords.map((kw, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '3px 8px',
+                          backgroundColor: '#EBE2D5',
+                          borderRadius: '3px',
+                          fontSize: '11px',
+                          color: '#332418',
+                          fontWeight: 500
+                        }}
+                      >
+                        <span>{kw}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = editingBlog.seo_keywords!.filter((_, i) => i !== idx);
+                            setEditingBlog((prev) => ({ ...prev, seo_keywords: updated }));
+                            setSeoKeywordsRaw(updated.join(', '));
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            fontSize: '13px',
+                            lineHeight: 1,
+                            color: '#806957',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                          title="Remove keyword"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1689,9 +1758,36 @@ export const BlogsManager: React.FC = () => {
                   </div>
                 )}
 
-                <div style={{ fontSize: '14px', lineHeight: 1.8, color: '#332418', whiteSpace: 'pre-wrap' }}>
-                  {editingBlog.content || 'No content written yet. Switch to the Content tab to write.'}
-                </div>
+                {editingBlog.content ? (
+                  <>
+                    <style>{`
+                      .admin-preview-content .table-wrapper { overflow-x: auto; margin: 28px 0; border: 1px solid rgba(118, 89, 65, 0.25); border-radius: 4px; background: #FAF7F2; }
+                      .admin-preview-content table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+                      .admin-preview-content th { background: #19120C; color: #E8D3B9; font-weight: 500; font-size: 13px; padding: 12px 18px; letter-spacing: 0.03em; }
+                      .admin-preview-content td { padding: 12px 18px; border-bottom: 1px solid rgba(118, 89, 65, 0.16); color: #332418; line-height: 1.6; }
+                      .admin-preview-content tr:last-child td { border-bottom: none; }
+                      .admin-preview-content .article-quote { border-left: 3px solid #C4A482; padding: 12px 18px; margin: 20px 0; background: #FAF7F2; font-style: italic; color: #5b4130; }
+                      .admin-preview-content .article-divider { height: 1px; background: rgba(118, 89, 65, 0.2); border: none; margin: 32px 0; }
+                      .admin-preview-content .article-figure { margin: 24px 0; }
+                      .admin-preview-content .article-figure img { width: 100%; border-radius: 4px; }
+                      .admin-preview-content .article-figure figcaption { font-size: 11px; color: #806957; margin-top: 6px; text-align: center; }
+                      .admin-preview-content h2 { font-family: RoelSerif, Georgia, serif; font-size: 24px; color: #19120C; margin: 32px 0 16px; }
+                      .admin-preview-content h3 { font-family: RoelSerif, Georgia, serif; font-size: 19px; color: #19120C; margin: 24px 0 12px; }
+                      .admin-preview-content p { margin: 0 0 18px; line-height: 1.8; color: #332418; }
+                      .admin-preview-content ul { padding-left: 20px; margin-bottom: 18px; }
+                      .admin-preview-content li { margin-bottom: 8px; line-height: 1.6; }
+                    `}</style>
+                    <div
+                      className="admin-preview-content"
+                      style={{ fontSize: '14px', lineHeight: 1.8, color: '#332418' }}
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(editingBlog.content) }}
+                    />
+                  </>
+                ) : (
+                  <div style={{ fontSize: '14px', color: '#806957', fontStyle: 'italic', padding: '24px 0' }}>
+                    No content written yet. Switch to the Content tab to write.
+                  </div>
+                )}
               </div>
             </div>
           )}

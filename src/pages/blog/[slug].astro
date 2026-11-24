@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import { getBlogBySlug, getRelatedBlogs } from '../../lib/supabase';
 import { imgSrc, waUrl } from '../../data/originalData.js';
+import { renderMarkdown } from '../../lib/markdown';
 
 const { slug } = Astro.params;
 
@@ -36,92 +37,6 @@ const headingLines = blog.content
       .replace(/^-+|-+$/g, '');
     return { title, id };
   });
-
-// Simple markdown-to-html converter for rich article rendering
-function renderMarkdown(md: string): string {
-  let html = md;
-
-  // Process tables
-  html = html.replace(/(\|.+\|\n)+/g, (tableMatch) => {
-    const rows = tableMatch.trim().split('\n');
-    let tableHtml = '<div class="table-wrapper"><table>';
-    let isHeader = true;
-
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i].trim();
-      if (row.includes('---')) {
-        isHeader = false;
-        continue;
-      }
-      const cols = row.split('|').filter((_, idx, arr) => idx !== 0 && idx !== arr.length - 1);
-      tableHtml += '<tr>';
-      cols.forEach((col) => {
-        const text = col.trim();
-        if (isHeader) {
-          tableHtml += `<th>${text}</th>`;
-        } else {
-          tableHtml += `<td>${text}</td>`;
-        }
-      });
-      tableHtml += '</tr>';
-    }
-    tableHtml += '</table></div>';
-    return tableHtml;
-  });
-
-  // Headings with IDs
-  html = html.replace(/^### (.*$)/gim, (_, text) => {
-    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
-    return `<h3 id="${id}">${text}</h3>`;
-  });
-
-  html = html.replace(/^## (.*$)/gim, (_, text) => {
-    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
-    return `<h2 id="${id}">${text}</h2>`;
-  });
-
-  // Images
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="article-figure"><img src="$2" alt="$1" loading="lazy" /><figcaption>$1</figcaption></figure>');
-
-  // Bold & Italic
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-  // Blockquotes / Callout boxes
-  html = html.replace(/^\> (.*$)/gim, '<blockquote class="article-quote">$1</blockquote>');
-
-  // Unordered lists
-  html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>)/gms, '<ul>$1</ul>');
-  // Clean double ul tags
-  html = html.replace(/<\/ul>\s*<ul>/g, '');
-
-  // Horizontal rules
-  html = html.replace(/^---$/gim, '<hr class="article-divider" />');
-
-  // Paragraphs
-  const blocks = html.split(/\n\s*\n/);
-  html = blocks
-    .map((block) => {
-      const trimmed = block.trim();
-      if (
-        trimmed.startsWith('<h') ||
-        trimmed.startsWith('<ul') ||
-        trimmed.startsWith('<ol') ||
-        trimmed.startsWith('<div') ||
-        trimmed.startsWith('<table') ||
-        trimmed.startsWith('<figure') ||
-        trimmed.startsWith('<blockquote') ||
-        trimmed.startsWith('<hr')
-      ) {
-        return trimmed;
-      }
-      return `<p>${trimmed.replace(/\n/g, '<br />')}</p>`;
-    })
-    .join('\n');
-
-  return html;
-}
 
 const renderedArticleHtml = renderMarkdown(blog.content);
 
@@ -210,6 +125,7 @@ const whatsappDiscussionUrl = waUrl(`Hello ROEL Studio, I read your article "${b
   description={blog.seo_description || blog.excerpt}
   image={imgSrc(blog.cover_image)}
   article={true}
+  keywords={(blog.seo_keywords || []).join(', ')}
 >
   <!-- Injected BlogPosting and Breadcrumbs Schema -->
   <script type="application/ld+json" set:html={JSON.stringify(articleJsonLd)} />

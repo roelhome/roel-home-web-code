@@ -42,7 +42,7 @@ export async function sendEnquiryEmail(params: SendEnquiryParams, runtimeEnv?: R
   const safeSource = escapeHtml(params.source || 'Website Contact Form');
 
   try {
-    const data = await resend.emails.send({
+    const data = await client.emails.send({
       from: 'ROEL Website <onboarding@resend.dev>', // or custom domain when verified
       to: [notificationEmail],
       replyTo: params.email ? params.email.trim() : undefined,

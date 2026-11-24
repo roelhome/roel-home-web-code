@@ -51,19 +51,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onSuccess }) => {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#19120C',
-        padding: '24px',
+        padding: '16px',
         fontFamily: "RoelSans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
       }}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '440px',
-          backgroundColor: '#F0E2CE',
-          padding: '44px 36px',
-          border: '1px solid rgba(229,191,140,0.3)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
-        }}
+        className="roel-login-box"
       >
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>

@@ -546,7 +546,7 @@ export const ProjectsManager: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             gap: '24px'
           }}
         >
@@ -794,6 +794,7 @@ export const ProjectsManager: React.FC = () => {
           }}
         >
           <div
+            className="roel-modal-content"
             style={{
               backgroundColor: '#fff',
               borderRadius: '3px',
@@ -857,7 +858,7 @@ export const ProjectsManager: React.FC = () => {
 
             {/* Modal Form */}
             <form onSubmit={handleSave} style={{ padding: '24px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px', marginBottom: '20px' }}>
                 {/* Project Name */}
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#765941', marginBottom: '6px' }}>
@@ -916,7 +917,7 @@ export const ProjectsManager: React.FC = () => {
               </div>
 
               {/* Category, Location, Year */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '18px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '18px', marginBottom: '20px' }}>
                 {/* Category */}
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#765941', marginBottom: '6px' }}>

@@ -185,6 +185,7 @@ export const CategoriesManager: React.FC = () => {
 
         <form
           onSubmit={handleCreate}
+          className="roel-category-create-form"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 120px auto',
@@ -327,7 +328,8 @@ export const CategoriesManager: React.FC = () => {
             No categories defined yet. Add your first category above.
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <div className="roel-table-wrapper" style={{ border: 'none', marginBottom: 0 }}>
+            <table className="roel-table-min" style={{ borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: 'rgba(240,226,206,0.5)', borderBottom: '1px solid rgba(118,89,65,0.2)' }}>
                 <th style={{ padding: '12px 20px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#5b4130', width: '90px' }}>
@@ -468,6 +470,7 @@ export const CategoriesManager: React.FC = () => {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

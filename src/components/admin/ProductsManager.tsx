@@ -645,7 +645,7 @@ export const ProductsManager: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSaveProduct} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '24px' }}>
+        <form onSubmit={handleSaveProduct} className="roel-responsive-form-split" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '24px' }}>
           {/* Left Column: Core Fields & Variants */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* Core Details Card */}
@@ -654,7 +654,7 @@ export const ProductsManager: React.FC = () => {
                 1. General Product Details
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: '#5b4130', marginBottom: '6px' }}>
                     Product Title *
@@ -684,7 +684,7 @@ export const ProductsManager: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: '#5b4130', marginBottom: '6px' }}>
                     Category
@@ -1896,7 +1896,7 @@ export const ProductsManager: React.FC = () => {
       </div>
 
       {/* Products Table */}
-      <div style={{ backgroundColor: '#fff', border: '1px solid rgba(118,89,65,0.2)', overflowX: 'auto' }}>
+      <div className="roel-table-wrapper">
         {loading ? (
           <div style={{ padding: '60px', textAlign: 'center', color: '#765941' }}>
             <Loader2 style={{ width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
@@ -1922,7 +1922,7 @@ export const ProductsManager: React.FC = () => {
             </button>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <table className="roel-table-min" style={{ borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: 'rgba(240,226,206,0.5)', borderBottom: '1px solid rgba(118,89,65,0.2)' }}>
                 <th style={{ padding: '14px 18px', width: '70px' }}>Thumbnail</th>

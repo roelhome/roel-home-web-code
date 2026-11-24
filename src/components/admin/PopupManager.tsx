@@ -509,6 +509,7 @@ export const PopupManager: React.FC = () => {
 
       {/* Main Split Layout: Left Controls, Right Sticky Live Preview */}
       <div
+        className="roel-responsive-form-split"
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1.15fr) minmax(360px, 0.85fr)',
@@ -916,7 +917,7 @@ export const PopupManager: React.FC = () => {
                 </div>
 
                 {/* Title Prefix & Highlight */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#765941', display: 'block', marginBottom: '6px' }}>
                       Main Heading Prefix
@@ -958,7 +959,7 @@ export const PopupManager: React.FC = () => {
                 </div>
 
                 {/* Submit Buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#765941', display: 'block', marginBottom: '6px' }}>
                       Submit Button Label
@@ -1091,7 +1092,7 @@ export const PopupManager: React.FC = () => {
                   </div>
 
                   {settings.show_call_footer && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="roel-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                       <div>
                         <label style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#765941', display: 'block', marginBottom: '6px' }}>
                           Prompt Text
@@ -1136,7 +1137,7 @@ export const PopupManager: React.FC = () => {
         </div>
 
         {/* Right Column: Sticky Live Interactive Preview */}
-        <div style={{ position: 'sticky', top: '24px' }}>
+        <div className="roel-sticky-preview" style={{ position: 'sticky', top: '24px' }}>
           <div
             style={{
               backgroundColor: '#fff',

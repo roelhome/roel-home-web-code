@@ -622,7 +622,7 @@ export const ServicesManager: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             gap: '24px'
           }}
         >
@@ -909,6 +909,7 @@ export const ServicesManager: React.FC = () => {
           }}
         >
           <div
+            className="roel-modal-content"
             style={{
               backgroundColor: '#fff',
               borderRadius: '3px',
@@ -976,7 +977,7 @@ export const ServicesManager: React.FC = () => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                   gap: '18px',
                   marginBottom: '20px'
                 }}
@@ -1063,7 +1064,7 @@ export const ServicesManager: React.FC = () => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                   gap: '18px',
                   marginBottom: '20px'
                 }}
@@ -1441,6 +1442,7 @@ export const ServicesManager: React.FC = () => {
 
                       {/* Inputs: Step Heading and Step Description */}
                       <div
+                        className="roel-grid-2"
                         style={{
                           display: 'grid',
                           gridTemplateColumns: 'minmax(180px, 240px) 1fr',

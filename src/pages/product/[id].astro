@@ -172,7 +172,7 @@ const productSchema = {
     <div class="detail-grid pdp-grid">
       <!-- Left Column: Visual Gallery Showcase -->
       <div class="pdp-media-column">
-        <div class="detail-image pdp-main-image-wrap">
+        <div class="detail-image pdp-main-image-wrap" id="pdp-main-image-wrap">
           <img 
             id="pdp-main-img" 
             src={initialGallery[0].src} 
@@ -180,14 +180,46 @@ const productSchema = {
             loading="eager" 
           />
           <span class="label pdp-category-pill">{product.category}</span>
-          <span class="pdp-zoom-cue">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-            ARCHITECTURAL FINISH
+
+
+          <!-- Prev/Next Navigation Arrows -->
+          <button 
+            type="button" 
+            class="pdp-gallery-arrow prev" 
+            id="pdp-arrow-prev" 
+            aria-label="Previous photo"
+            style={initialGallery.length <= 1 ? "display: none;" : ""}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button 
+            type="button" 
+            class="pdp-gallery-arrow next" 
+            id="pdp-arrow-next" 
+            aria-label="Next photo"
+            style={initialGallery.length <= 1 ? "display: none;" : ""}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+
+          <!-- Photo Counter Badge -->
+          <span 
+            class="pdp-gallery-counter" 
+            id="pdp-gallery-counter"
+            style={initialGallery.length <= 1 ? "display: none;" : ""}
+          >
+            <span id="pdp-counter-current">1</span> / <span id="pdp-counter-total">{initialGallery.length}</span>
           </span>
         </div>
 
         <!-- Thumbnail Selector -->
-        <div class="pdp-thumbnails" id="pdp-thumbs-container" role="tablist" aria-label="Product viewpoints">
+        <div 
+          class="pdp-thumbnails" 
+          id="pdp-thumbs-container" 
+          role="tablist" 
+          aria-label="Product viewpoints"
+          style={initialGallery.length <= 1 ? "display: none;" : ""}
+        >
           {initialGallery.map((g, idx) => {
             const matchingVar = allVariants.find((v) =>
               Array.isArray(v.images) && v.images.some((img) => imgSrc(img) === g.src || img === g.src)
@@ -199,6 +231,7 @@ const productSchema = {
                 data-img-src={g.src}
                 data-img-alt={g.alt}
                 data-variant-id={matchingVar ? matchingVar.id : ''}
+                data-index={idx}
                 aria-label={`View photo ${idx + 1}`}
               >
                 <img src={g.src} alt={g.alt} loading="lazy" />
@@ -683,6 +716,7 @@ const productSchema = {
             b.setAttribute('data-img-src', resolved);
             b.setAttribute('data-img-alt', `${productName} - ${combinedSummary} view ${idx + 1}`);
             b.setAttribute('data-variant-id', matchingVar ? matchingVar.id : '');
+            b.setAttribute('data-index', String(idx));
             b.setAttribute('aria-label', `View photo ${idx + 1}`);
             b.innerHTML = `<img src="${resolved}" alt="${productName} photo ${idx + 1}" loading="lazy" />`;
             thumbsContainer.appendChild(b);
@@ -692,43 +726,127 @@ const productSchema = {
       }
     }
 
+    function updateCounter(activeIdx, totalCount) {
+      const counterCurrent = document.getElementById('pdp-counter-current');
+      const counterTotal = document.getElementById('pdp-counter-total');
+      const counterEl = document.getElementById('pdp-gallery-counter');
+      const arrowPrev = document.getElementById('pdp-arrow-prev');
+      const arrowNext = document.getElementById('pdp-arrow-next');
+
+      const total = totalCount !== undefined ? totalCount : document.querySelectorAll('.pdp-thumb-btn').length;
+      if (counterTotal) counterTotal.textContent = String(total);
+      if (counterCurrent && activeIdx !== undefined) counterCurrent.textContent = String(activeIdx + 1);
+
+      const hasMultiple = total > 1;
+      if (counterEl) counterEl.style.display = hasMultiple ? 'inline-flex' : 'none';
+      if (arrowPrev) arrowPrev.style.display = hasMultiple ? 'flex' : 'none';
+      if (arrowNext) arrowNext.style.display = hasMultiple ? 'flex' : 'none';
+      if (thumbsContainer) thumbsContainer.style.display = hasMultiple ? 'flex' : 'none';
+    }
+
+    function selectThumb(btn) {
+      if (!btn) return;
+      const thumbBtns = document.querySelectorAll('.pdp-thumb-btn');
+      const newSrc = btn.getAttribute('data-img-src');
+      const newAlt = btn.getAttribute('data-img-alt');
+      const varId = btn.getAttribute('data-variant-id');
+
+      // 1. Crossfade main photo
+      if (mainImg && newSrc && mainImg.src !== newSrc) {
+        mainImg.style.opacity = '0.3';
+        mainImg.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          mainImg.src = newSrc;
+          if (newAlt) mainImg.alt = newAlt;
+          mainImg.style.opacity = '1';
+          mainImg.style.transform = 'scale(1)';
+        }, 140);
+      }
+
+      // 2. Mark this thumb active
+      thumbBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // 3. Scroll thumbnail into view
+      try {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } catch (e) {}
+
+      // 4. Update counter
+      const allBtns = Array.from(thumbBtns);
+      const activeIdx = allBtns.indexOf(btn);
+      updateCounter(activeIdx >= 0 ? activeIdx : 0, allBtns.length);
+
+      // 5. Resolve matching variant and update Price & Options!
+      let matchedVariant = varId ? variantsMatrix.find((v) => v.id === varId) : null;
+      if (!matchedVariant) {
+        matchedVariant = findVariantByImage(newSrc);
+      }
+
+      if (matchedVariant) {
+        applyVariant(matchedVariant, false);
+      }
+    }
+
     // Attach listeners to thumbnails
     function attachThumbListeners() {
       const thumbBtns = document.querySelectorAll('.pdp-thumb-btn');
       thumbBtns.forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const newSrc = btn.getAttribute('data-img-src');
-          const newAlt = btn.getAttribute('data-img-alt');
-          const varId = btn.getAttribute('data-variant-id');
-
-          // 1. Crossfade main photo
-          if (mainImg && newSrc && mainImg.src !== newSrc) {
-            mainImg.style.opacity = '0.3';
-            mainImg.style.transform = 'scale(0.98)';
-            setTimeout(() => {
-              mainImg.src = newSrc;
-              if (newAlt) mainImg.alt = newAlt;
-              mainImg.style.opacity = '1';
-              mainImg.style.transform = 'scale(1)';
-            }, 140);
-          }
-
-          // 2. Mark this thumb active
-          thumbBtns.forEach((b) => b.classList.remove('active'));
-          btn.classList.add('active');
-
-          // 3. Resolve matching variant and update Price & Options!
-          let matchedVariant = varId ? variantsMatrix.find((v) => v.id === varId) : null;
-          if (!matchedVariant) {
-            matchedVariant = findVariantByImage(newSrc);
-          }
-
-          if (matchedVariant) {
-            // Apply price, active option pills, swatches, and enquiry links
-            applyVariant(matchedVariant, false);
-          }
-        });
+        btn.onclick = () => selectThumb(btn);
       });
+      const allBtns = Array.from(thumbBtns);
+      const activeIdx = allBtns.findIndex((b) => b.classList.contains('active'));
+      updateCounter(activeIdx >= 0 ? activeIdx : 0, allBtns.length);
+    }
+
+    function goToNextThumb() {
+      const thumbBtns = Array.from(document.querySelectorAll('.pdp-thumb-btn'));
+      if (thumbBtns.length <= 1) return;
+      const activeIdx = thumbBtns.findIndex((b) => b.classList.contains('active'));
+      const nextIdx = (activeIdx + 1) % thumbBtns.length;
+      selectThumb(thumbBtns[nextIdx]);
+    }
+
+    function goToPrevThumb() {
+      const thumbBtns = Array.from(document.querySelectorAll('.pdp-thumb-btn'));
+      if (thumbBtns.length <= 1) return;
+      const activeIdx = thumbBtns.findIndex((b) => b.classList.contains('active'));
+      const prevIdx = activeIdx > 0 ? activeIdx - 1 : thumbBtns.length - 1;
+      selectThumb(thumbBtns[prevIdx]);
+    }
+
+    const prevBtn = document.getElementById('pdp-arrow-prev');
+    const nextBtn = document.getElementById('pdp-arrow-next');
+    if (prevBtn) prevBtn.onclick = (e) => { e.stopPropagation(); goToPrevThumb(); };
+    if (nextBtn) nextBtn.onclick = (e) => { e.stopPropagation(); goToNextThumb(); };
+
+    // Mobile touch swipe support on the main photo container
+    const mainWrap = document.getElementById('pdp-main-image-wrap');
+    if (mainWrap) {
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      mainWrap.addEventListener('touchstart', (e) => {
+        if (!e.changedTouches || e.changedTouches.length === 0) return;
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      mainWrap.addEventListener('touchend', (e) => {
+        if (!e.changedTouches || e.changedTouches.length === 0) return;
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+        // Require horizontal distance > 40px and greater than vertical movement
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX < 0) {
+            goToNextThumb();
+          } else {
+            goToPrevThumb();
+          }
+        }
+      }, { passive: true });
     }
 
     attachThumbListeners();
@@ -917,6 +1035,69 @@ const productSchema = {
       outline-offset: 4px;
     }
 
+    /* Main Image Overlay Controls */
+    .pdp-gallery-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(25, 18, 12, 0.68);
+      border: 1px solid rgba(229, 191, 140, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: var(--ivory);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      padding: 0;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .pdp-gallery-arrow:hover {
+      background: rgba(25, 18, 12, 0.92);
+      border-color: var(--champagne);
+      color: var(--champagne);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .pdp-gallery-arrow:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    .pdp-gallery-arrow.prev {
+      left: 14px;
+    }
+
+    .pdp-gallery-arrow.next {
+      right: 14px;
+    }
+
+    .pdp-gallery-counter {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(25, 18, 12, 0.88);
+      color: var(--champagne);
+      padding: 6px 12px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid rgba(229, 191, 140, 0.32);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-radius: 2px;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+
+
     /* Accessible Screen Reader Utility */
     .sr-only {
       position: absolute;
@@ -931,13 +1112,61 @@ const productSchema = {
     }
 
     @media (max-width: 768px) {
-      /* Remove thumbnail row on mobile to save vertical space so variant updates are visible */
       .pdp-thumbnails {
-        display: none !important;
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-snap-type: x proximity;
+        padding: 3px 2px 8px !important;
+        scrollbar-width: thin;
+      }
+
+      .pdp-thumbnails::-webkit-scrollbar {
+        height: 3px;
+      }
+
+      .pdp-thumbnails::-webkit-scrollbar-thumb {
+        background: rgba(118, 89, 65, 0.35);
+        border-radius: 2px;
+      }
+
+      .pdp-thumb-btn {
+        width: 68px !important;
+        height: 56px !important;
+        flex: 0 0 68px !important;
+        border-radius: 3px;
+        scroll-snap-align: start;
+      }
+
+      .pdp-thumb-btn.active {
+        border-color: var(--champagne) !important;
+        box-shadow: 0 2px 8px rgba(118, 89, 65, 0.4) !important;
+      }
+
+      .pdp-gallery-arrow {
+        width: 32px;
+        height: 32px;
+      }
+
+      .pdp-gallery-arrow.prev {
+        left: 8px;
+      }
+
+      .pdp-gallery-arrow.next {
+        right: 8px;
+      }
+
+      .pdp-gallery-counter {
+        top: 14px;
+        right: 14px;
+        padding: 5px 9px;
+        font-size: 9.5px;
       }
 
       .pdp-main-image-wrap {
-        height: clamp(260px, 40vh, 320px) !important;
+        height: clamp(270px, 42vh, 340px) !important;
       }
 
       .pdp-grid {

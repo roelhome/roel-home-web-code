@@ -1,15 +1,16 @@
 ---
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import '../../styles/global.css';
+import '../../styles/admin.css';
 
 export const prerender = false;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="roel-admin-body">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>ROEL Studio Admin | Portal</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -18,7 +19,7 @@ export const prerender = false;
     <link rel="icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   </head>
-  <body style="margin: 0; background-color: #19120C;">
+  <body class="roel-admin-body" style="margin: 0; background-color: #19120C;">
     <AdminLayout client:only="react" />
   </body>
 </html>

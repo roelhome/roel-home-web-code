@@ -28,7 +28,8 @@ import {
   Film,
   SlidersHorizontal,
   Briefcase,
-  BookOpen
+  BookOpen,
+  X
 } from 'lucide-react';
 
 type TabKey = 'leads' | 'hero' | 'video' | 'popup' | 'products' | 'categories' | 'projects' | 'services' | 'blogs' | 'media';
@@ -346,30 +347,54 @@ export const AdminLayout: React.FC = () => {
             </div>
           )}
 
-          {/* Desktop Collapse / Expand Toggle */}
-          <button
-            onClick={toggleSidebarCollapse}
-            className="roel-icon-btn"
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(240, 226, 206, 0.6)',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.15s ease, color 0.15s ease'
-            }}
-          >
-            {isCollapsed ? (
-              <PanelLeftOpen style={{ width: '18px', height: '18px', color: '#D49E58' }} />
-            ) : (
-              <PanelLeftClose style={{ width: '17px', height: '17px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {/* Mobile Drawer Close Button */}
+            {mobileOpen && (
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="roel-icon-btn"
+                title="Close menu"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(240, 226, 206, 0.7)',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X style={{ width: '18px', height: '18px' }} />
+              </button>
             )}
-          </button>
+
+            {/* Desktop Collapse / Expand Toggle */}
+            <button
+              onClick={toggleSidebarCollapse}
+              className="roel-icon-btn"
+              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(240, 226, 206, 0.6)',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '4px',
+                display: mobileOpen ? 'none' : 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.15s ease, color 0.15s ease'
+              }}
+            >
+              {isCollapsed ? (
+                <PanelLeftOpen style={{ width: '18px', height: '18px', color: '#D49E58' }} />
+              ) : (
+                <PanelLeftClose style={{ width: '17px', height: '17px' }} />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Navigation List */}
@@ -557,7 +582,7 @@ export const AdminLayout: React.FC = () => {
             display: 'none',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '12px 18px',
+            padding: '12px 16px',
             backgroundColor: '#14110E',
             borderBottom: '1px solid rgba(229, 191, 140, 0.15)',
             color: '#F0E2CE',
@@ -574,7 +599,7 @@ export const AdminLayout: React.FC = () => {
                 border: '1px solid rgba(229,191,140,0.3)',
                 color: '#F0E2CE',
                 borderRadius: '4px',
-                padding: '5px 8px',
+                padding: '6px 8px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center'
@@ -588,24 +613,48 @@ export const AdminLayout: React.FC = () => {
             </span>
           </div>
 
-          <span
-            style={{
-              fontSize: '10px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              padding: '2px 8px',
-              backgroundColor: 'rgba(212,158,88,0.15)',
-              color: '#D49E58',
-              borderRadius: '3px',
-              fontWeight: 600
-            }}
-          >
-            {currentTabMeta.label.split(' ')[0]}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                fontSize: '10px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                padding: '3px 8px',
+                backgroundColor: 'rgba(212,158,88,0.15)',
+                color: '#D49E58',
+                borderRadius: '3px',
+                fontWeight: 600
+              }}
+            >
+              {currentTabMeta.label.split(' ')[0]}
+            </span>
+
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              title="Open Live Website"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '30px',
+                height: '30px',
+                backgroundColor: 'rgba(240, 226, 206, 0.1)',
+                border: '1px solid rgba(229,191,140,0.25)',
+                borderRadius: '4px',
+                color: '#F0E2CE',
+                textDecoration: 'none'
+              }}
+            >
+              <Globe style={{ width: '15px', height: '15px' }} />
+            </a>
+          </div>
         </div>
 
         {/* Content Topbar (Desktop) */}
         <header
+          className="roel-desktop-header"
           style={{
             height: '56px',
             backgroundColor: '#FFFFFF',
@@ -665,6 +714,7 @@ export const AdminLayout: React.FC = () => {
 
         {/* Main Content Viewport */}
         <main
+          className="roel-admin-main"
           style={{
             flex: 1,
             padding: '28px 32px 64px',

@@ -1,0 +1,248 @@
+/* ==========================================================================
+   ROEL Studio Admin - Complete Mobile Responsive System
+   ========================================================================== */
+
+/* 1. Global Admin Viewport & Scroll Locking */
+html.roel-admin-body,
+body.roel-admin-body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 2. Responsive Layout Shell & Main Container */
+.roel-admin-shell {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.roel-admin-main {
+  flex: 1;
+  padding: 28px 32px 64px;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* 3. Responsive Breakpoints */
+@media (max-width: 900px) {
+  /* Reduce padding on mobile devices */
+  .roel-admin-main {
+    padding: 14px 12px 60px !important;
+  }
+
+  /* Hide the duplicate desktop header when mobile topbar is shown */
+  .roel-desktop-header {
+    display: none !important;
+  }
+
+  /* Mobile Topbar Display */
+  .roel-mobile-topbar {
+    display: flex !important;
+  }
+
+  /* Drawer Sidebar on Mobile */
+  .roel-sidebar {
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 200 !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+  }
+
+  .roel-sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+
+  .roel-mobile-backdrop {
+    display: block !important;
+  }
+
+  /* Split layout (Products, Popups, etc.) stacks vertically on mobile/tablet */
+  .roel-responsive-form-split {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .roel-sticky-preview {
+    position: static !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* 4. Table Containers - Horizontal Smooth Touch Scrolling */
+.roel-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(118, 89, 65, 0.2);
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.roel-table-min {
+  min-width: 680px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* 5. Sub-Tabs Touch Horizontal Scrolling */
+.roel-tabs-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(118, 89, 65, 0.15);
+  margin-bottom: 16px;
+}
+
+.roel-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.roel-tabs-scroll button {
+  white-space: nowrap !important;
+  flex-shrink: 0;
+}
+
+/* 6. Form Header Action Bar on Mobile */
+@media (max-width: 768px) {
+  /* Edit modal / form top bar */
+  .roel-form-topbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+
+  .roel-form-topbar-actions {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .roel-form-topbar-actions button {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+
+  /* 2-column input grids stack to single column */
+  .roel-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .roel-grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  /* Blog Post List Item (Stacked layout on mobile) */
+  .roel-blog-card-item {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 16px 14px !important;
+  }
+
+  .roel-blog-card-thumbnail {
+    width: 100% !important;
+    height: 160px !important;
+  }
+
+  .roel-blog-card-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(118, 89, 65, 0.1) !important;
+  }
+
+  .roel-blog-card-actions button,
+  .roel-blog-card-actions a {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    padding: 9px 12px !important;
+  }
+
+  /* Filter bar wrapping */
+  .roel-filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .roel-filter-bar > div {
+    width: 100% !important;
+  }
+
+  .roel-filter-controls {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .roel-filter-controls select,
+  .roel-filter-controls button {
+    width: 100% !important;
+  }
+
+  /* Category Create Form */
+  .roel-category-create-form {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .roel-category-create-form button {
+    width: 100% !important;
+  }
+
+  /* Modal Dialog Boxes on Mobile */
+  .roel-modal-content {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 18px 14px !important;
+    margin: 10px !important;
+  }
+}
+
+/* 7. General Responsive Utilities */
+.roel-login-box {
+  width: 100%;
+  max-width: 440px;
+  background-color: #F0E2CE;
+  padding: 44px 36px;
+  border: 1px solid rgba(229,191,140,0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .roel-login-box {
+    padding: 32px 18px !important;
+  }
+
+  .roel-filter-controls {
+    grid-template-columns: 1fr !important;
+  }
+
+  .roel-stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

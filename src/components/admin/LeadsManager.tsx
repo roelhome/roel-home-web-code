@@ -214,8 +214,8 @@ export const LeadsManager: React.FC = () => {
           border: '1px solid rgba(118,89,65,0.2)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1', minWidth: '260px' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '340px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1', minWidth: '0', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '340px', flex: '1 1 200px' }}>
             <Search
               style={{
                 position: 'absolute',
@@ -244,7 +244,7 @@ export const LeadsManager: React.FC = () => {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {['all', 'unread', 'contacted', 'converted', 'archived'].map((status) => (
               <button
                 key={status}
@@ -310,7 +310,7 @@ export const LeadsManager: React.FC = () => {
       </div>
 
       {/* Leads Table */}
-      <div style={{ backgroundColor: '#fff', border: '1px solid rgba(118,89,65,0.2)', overflowX: 'auto' }}>
+      <div className="roel-table-wrapper">
         {loading ? (
           <div style={{ padding: '60px', textAlign: 'center', color: '#765941' }}>
             <Loader2 style={{ width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
@@ -324,7 +324,7 @@ export const LeadsManager: React.FC = () => {
             </p>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <table className="roel-table-min" style={{ borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: 'rgba(240,226,206,0.5)', borderBottom: '1px solid rgba(118,89,65,0.2)' }}>
                 <th style={{ padding: '14px 18px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#5b4130' }}>
@@ -512,6 +512,7 @@ export const LeadsManager: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
+            className="roel-modal-content"
             style={{
               backgroundColor: '#fff',
               width: '100%',
@@ -554,6 +555,7 @@ export const LeadsManager: React.FC = () => {
             </h2>
 
             <div
+              className="roel-grid-2"
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
