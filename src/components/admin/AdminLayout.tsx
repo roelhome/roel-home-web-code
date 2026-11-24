@@ -244,6 +244,26 @@ export const AdminLayout: React.FC = () => {
           color: #ef4444 !important;
         }
 
+        /* Desktop Sticky/Fixed Sidebar */
+        .roel-sidebar {
+          position: fixed !important;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          height: 100vh !important;
+          max-height: 100vh !important;
+          z-index: 90 !important;
+        }
+
+        .roel-admin-content-area {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+          margin-left: ${isCollapsed ? '60px' : '240px'};
+          transition: margin-left 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
         /* Mobile Drawer Breakpoint */
         @media (max-width: 900px) {
           .roel-sidebar {
@@ -251,16 +271,19 @@ export const AdminLayout: React.FC = () => {
             top: 0;
             bottom: 0;
             left: 0;
-            z-index: 110 !important;
-            width: 240px !important;
-            min-width: 240px !important;
+            z-index: 200 !important;
+            width: 260px !important;
+            min-width: 260px !important;
             transform: translateX(-100%);
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
           }
           .roel-sidebar.mobile-open {
             transform: translateX(0) !important;
-            z-index: 110 !important;
+            z-index: 200 !important;
+          }
+          .roel-admin-content-area {
+            margin-left: 0 !important;
           }
           .roel-mobile-backdrop {
             display: block !important;
@@ -295,14 +318,17 @@ export const AdminLayout: React.FC = () => {
           width: isCollapsed ? '60px' : '240px',
           minWidth: isCollapsed ? '60px' : '240px',
           height: '100vh',
-          position: 'sticky',
+          maxHeight: '100vh',
+          position: 'fixed',
           top: 0,
+          left: 0,
+          bottom: 0,
           backgroundColor: '#14110E',
           color: '#F0E2CE',
           display: 'flex',
           flexDirection: 'column',
           borderRight: '1px solid rgba(229, 191, 140, 0.12)',
-          zIndex: mobileOpen ? 110 : 80,
+          zIndex: mobileOpen ? 200 : 90,
           transition: 'width 0.2s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           overflow: 'hidden',
           flexShrink: 0
@@ -574,7 +600,17 @@ export const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div
+        className="roel-admin-content-area"
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          marginLeft: isCollapsed ? '60px' : '240px',
+          transition: 'margin-left 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+      >
         {/* Mobile Header Bar (<= 900px only) */}
         <div
           className="roel-mobile-topbar"
@@ -663,7 +699,10 @@ export const AdminLayout: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '16px'
+            gap: '16px',
+            position: 'sticky',
+            top: 0,
+            zIndex: 50
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
